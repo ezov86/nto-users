@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from app.api.schemas import username_constr, UserSchema
-from app.core.auth_strategies import TelegramRegisterSchema, TelegramAuthStrategy, InvalidCredentialsError
+from app.core.strategies import TelegramRegisterSchema, TelegramStrategy, InvalidCredentialsError
 from app.core.register import UserAlreadyExistsError
 
 tg_router = APIRouter(
@@ -25,7 +25,7 @@ class TelegramRegisterValidatedSchema(BaseModel):
 )
 def tg_register(
         body: TelegramRegisterValidatedSchema,
-        auth_strategy: TelegramAuthStrategy = Depends(),
+        auth_strategy: TelegramStrategy = Depends(),
 ) -> UserSchema:
     try:
         user_from_db = auth_strategy.register(TelegramRegisterSchema(

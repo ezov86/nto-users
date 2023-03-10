@@ -6,7 +6,7 @@ from app.core.crypto import decode_token, InvalidTokenError
 from app.core.models import User, TelegramAuthEntry
 from app.core.register import RegistrationService, UserRegisterSchema
 from app.core.repos import TelegramAuthRepo, UserRepo
-from .base import BaseAuthStrategy, InvalidCredentialsError, UserIsNotPermittedError
+from .base import BaseStrategy, InvalidCredentialsError, UserIsNotPermittedError
 
 
 class TelegramRegisterSchema(BaseModel):
@@ -23,11 +23,7 @@ class TelegramLoginSchema(BaseModel):
     token: str
 
 
-class TelegramAuthStrategy(BaseAuthStrategy[
-                               TelegramLoginSchema,
-                               TelegramRegisterSchema,
-                               TelegramAddStrategySchema
-                           ]):
+class TelegramStrategy(BaseStrategy[TelegramLoginSchema, TelegramRegisterSchema, TelegramAddStrategySchema]):
     def __init__(
             self,
             tg_auth_repo: TelegramAuthRepo = Depends(),

@@ -7,5 +7,5 @@ from .telegram import (
     TelegramRegisterSchema,
     TelegramAddStrategySchema,
     TelegramLoginSchema,
-    TelegramAuthStrategy
+    TelegramStrategy
 )

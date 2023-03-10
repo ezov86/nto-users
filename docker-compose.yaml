@@ -6,7 +6,7 @@ services:
     ports:
       - "${HOST_PORT}:80"
     environment:
-      RUNNING_IN_CONTAINER: True
+      IN_CONTAINER: true
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/docs"]
       interval: "1m"

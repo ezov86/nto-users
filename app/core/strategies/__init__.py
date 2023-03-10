@@ -1,7 +1,11 @@
 from .base import (
     InvalidCredentialsError,
     StrategyAlreadyAttachedError,
-    UserIsNotPermittedError
+    UserIsNotPermittedError,
+    LoginSchemaType,
+    RegisterSchemaType,
+    AddStrategySchemaType,
+    AuthStrategy
 )
 from .telegram import (
     TelegramRegisterSchema,

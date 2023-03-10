@@ -21,12 +21,24 @@ class StrategyAlreadyAttachedError(Exception):
         super().__init__(msg)
 
 
-LoginSchemaType = TypeVar("LoginSchemaType", bound=BaseModel)
-RegisterSchemaType = TypeVar("RegisterSchemaType", bound=BaseModel)
-AddStrategySchemaType = TypeVar("AddStrategySchemaType", bound=BaseModel)
+class LoginSchema(BaseModel):
+    scopes: list[str]
 
 
-class BaseAuthStrategy(Generic[LoginSchemaType, RegisterSchemaType, AddStrategySchemaType]):
+class RegisterSchema(BaseModel):
+    pass
+
+
+class AddStrategySchema(BaseModel):
+    pass
+
+
+LoginSchemaType = TypeVar("LoginSchemaType", bound=LoginSchema)
+RegisterSchemaType = TypeVar("RegisterSchemaType", bound=RegisterSchema)
+AddStrategySchemaType = TypeVar("AddStrategySchemaType", bound=AddStrategySchema)
+
+
+class AuthStrategy(Generic[LoginSchemaType, RegisterSchemaType, AddStrategySchemaType]):
     """
     Authentication strategy implements the way user registers their accounts, attaches new strategy for their account
     and uses it to login.
@@ -56,7 +68,7 @@ class BaseAuthStrategy(Generic[LoginSchemaType, RegisterSchemaType, AddStrategyS
         """
 
     @abstractmethod
-    def login_or_fail(self, schema: LoginSchemaType) -> User:
+    def login_for_user_model_or_fail(self, schema: LoginSchemaType) -> User:
         """
         Verify given credentials for login and return associated user model or fail.
 

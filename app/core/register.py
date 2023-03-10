@@ -16,7 +16,7 @@ class UserRegisterSchema(BaseModel):
 
 
 class UserAlreadyExistsError(Exception):
-    def __init__(self, msg="User already exists."):
+    def __init__(self, msg="User already exists"):
         super().__init__(msg)
 
 

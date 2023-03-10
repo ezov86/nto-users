@@ -72,7 +72,7 @@ class AuthenticationService:
         user = self.strategy.login_for_user_model_or_fail(credentials)
 
         if not self._check_requested_scopes(user, credentials.scopes):
-            raise UserIsNotPermittedError("User is not permitted to login in requested scopes.")
+            raise UserIsNotPermittedError()
 
         return self._encode_tokens(user.name, credentials.scopes)
 

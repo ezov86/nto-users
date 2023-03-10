@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 
 class UserIsNotPermittedError(Exception):
-    def __init__(self, msg="User is not permitted."):
+    def __init__(self, msg="User is not permitted"):
         super().__init__(msg)
 
 

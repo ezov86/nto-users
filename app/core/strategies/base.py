@@ -7,12 +7,12 @@ from app.core.models import User
 
 
 class InvalidAuthDataError(Exception):
-    def __init__(self, msg="Invalid authentication data."):
+    def __init__(self, msg="Invalid authentication data"):
         super().__init__(msg)
 
 
 class StrategyAlreadyAttachedError(Exception):
-    def __init__(self, msg="User already has this auth strategy."):
+    def __init__(self, msg="User already has this auth strategy"):
         super().__init__(msg)
 
 

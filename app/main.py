@@ -2,9 +2,9 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.config import get_config, load_config
+from app.config import load_config
 
-from app.api.endpoints import tg_router
+from app.api.endpoints import tg_router, tokens_router
 from app.db import connect_to_db
 
 app = FastAPI()
@@ -18,6 +18,7 @@ app.add_middleware(
 )
 
 app.include_router(tg_router)
+app.include_router(tokens_router)
 
 
 @app.on_event('startup')

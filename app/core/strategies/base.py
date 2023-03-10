@@ -11,11 +11,6 @@ class InvalidCredentialsError(Exception):
         super().__init__(msg)
 
 
-class UserIsNotPermittedToAuthError(Exception):
-    def __init__(self, msg="User is not permitted to authorize."):
-        super().__init__(msg)
-
-
 class StrategyAlreadyAttachedError(Exception):
     def __init__(self, msg="Authentication strategy was already attached to the user."):
         super().__init__(msg)
@@ -73,5 +68,5 @@ class AuthStrategy(Generic[LoginSchemaType, RegisterSchemaType, AddStrategySchem
         Verify given credentials for login and return associated user model or fail.
 
         :raises InvalidCredentialsError: credentials are invalid.
-        :raises UserIsNotPermittedToAuthError: user is not permitted to authorize.
+        :raises UserIsNotPermittedError: user is not permitted to authorize.
         """

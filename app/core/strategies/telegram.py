@@ -1,12 +1,12 @@
 from fastapi import Depends
-from pydantic import BaseModel
 
 from app.config import get_config, Config
 from app.core.crypto import decode_token, InvalidTokenError
 from app.core.models import User, TelegramAuthEntry
 from app.core.register import RegistrationService, UserRegisterSchema
 from app.core.repos import TelegramAuthRepo, UserRepo
-from .base import AuthStrategy, InvalidCredentialsError, UserIsNotPermittedError, LoginSchema, RegisterSchema, \
+from app.core.security import UserIsNotPermittedError
+from .base import AuthStrategy, InvalidCredentialsError, LoginSchema, RegisterSchema, \
     AddStrategySchema
 
 

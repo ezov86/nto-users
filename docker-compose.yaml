@@ -1,0 +1,28 @@
+version: "3.8"
+services:
+  nto-users:
+    container_name: "nto-users"
+    image: "nto-users"
+    ports:
+      - "${HOST_PORT}:80"
+    environment:
+      RUNNING_IN_CONTAINER: True
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/docs"]
+      interval: "1m"
+      timeout: "10s"
+      retries: 3
+      start_period: "10s"
+    restart: "unless-stopped"
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: "1G"
+    networks:
+      - postgres
+networks:
+  postgres:
+    external: true
+#  nto_postgres_postgres:
+#    external: true

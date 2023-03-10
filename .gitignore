@@ -1,0 +1,7 @@
+users.ini
+.env
+venv/
+.idea/
+.vscode/
+__pycache__/
+.pytest_cache/

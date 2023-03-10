@@ -21,10 +21,10 @@ class TelegramRegisterSchema(BaseModel):
 @tg_router.post(
     path="/tg/register",
     status_code=201,
-    description="Register a new user with telegram token.",
+    description="Register a new user with telegram token",
     responses={
-        400: {"description": "Invalid credentials given. "
-                             "Or user associated with given credentials already exists."}
+        400: {"description": "Invalid authentication data. "
+                             "Or user is already exists"}
     }
 )
 def tg_register(
@@ -59,10 +59,10 @@ class TelegramLoginSchema(BaseModel):
 @tg_router.post(
     path="/tg/login",
     status_code=200,
-    description="Login with telegram token.",
+    description="Login with telegram token",
     responses={
-        400: {"description": "Invalid credentials were given."},
-        403: {"description": "User is not permitted to authorize with given scopes."}
+        400: {"description": "Invalid authentication data"},
+        403: {"description": "User is not permitted to authorize"}
     }
 )
 def tg_login(

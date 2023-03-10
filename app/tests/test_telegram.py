@@ -96,6 +96,9 @@ def test_tg_register_with_invalid_token(
     )
 
     assert resp.status_code == 400
+    assert resp.json() == {
+        "detail": "Invalid authentication data"
+    }
 
 
 def test_tg_register_existing_user(
@@ -112,6 +115,9 @@ def test_tg_register_existing_user(
     )
 
     assert resp.status_code == 400
+    assert resp.json() == {
+        "detail": "User already exists"
+    }
 
 
 def test_tg_register_existing_tg_user(
@@ -129,3 +135,6 @@ def test_tg_register_existing_tg_user(
     )
 
     assert resp.status_code == 400
+    assert resp.json() == {
+        "detail": "User already exists"
+    }

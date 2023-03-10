@@ -4,12 +4,12 @@ from pydantic import BaseModel
 from app.config import Config, get_config
 from app.core.crypto import encode_token, decode_token
 from app.core.models import User
-from app.core.security import UserIsNotPermittedError, AuthenticatedUserSchema
-from app.core.strategies import LoginSchemaType
+from app.core.security import UserIsNotPermittedError, AuthenticatedUser
+from app.core.strategies import LoginCredentialsType
 from app.core.strategies import AuthStrategy
 
 
-class AuthTokensSchema(BaseModel):
+class AuthTokens(BaseModel):
     access: str
     refresh: str
 
@@ -26,7 +26,7 @@ class AuthenticationService:
     def set_strategy(self, strategy: AuthStrategy):
         self.strategy = strategy
 
-    def _encode_tokens(self, username: str, scopes: list[str]) -> AuthTokensSchema:
+    def _encode_tokens(self, username: str, scopes: list[str]) -> AuthTokens:
         scopes_str = " ".join(scopes)
 
         access_token = encode_token(
@@ -43,7 +43,7 @@ class AuthenticationService:
             {"scopes": scopes_str}
         )
 
-        return AuthTokensSchema(
+        return AuthTokens(
             access=access_token,
             refresh=refresh_token
         )
@@ -56,7 +56,7 @@ class AuthenticationService:
             if request_scope not in user.scopes:
                 return False
 
-    def login_for_tokens(self, credentials: LoginSchemaType) -> AuthTokensSchema:
+    def login_for_tokens(self, credentials: LoginCredentialsType) -> AuthTokens:
         """
         Login for access and refresh token.
 
@@ -76,7 +76,7 @@ class AuthenticationService:
 
         return self._encode_tokens(user.name, credentials.scopes)
 
-    def get_auth_user_from_access_token(self, access_token: str) -> AuthenticatedUserSchema:
+    def get_auth_user_from_access_token(self, access_token: str) -> AuthenticatedUser:
         """
         Get authenticated user from access token.
 
@@ -94,12 +94,12 @@ class AuthenticationService:
             self.config.oauth.access_token_secret
         )
 
-        return AuthenticatedUserSchema(
+        return AuthenticatedUser(
             name=str(payload["sub"]),
             scopes=str(payload["scopes"]).split()
         )
 
-    def refresh_tokens(self, refresh_token: str) -> AuthTokensSchema:
+    def refresh_tokens(self, refresh_token: str) -> AuthTokens:
         """
         Get new tokens with refresh-token.
 
@@ -117,7 +117,7 @@ class AuthenticationService:
             self.config.oauth.access_token_secret
         )
 
-        return AuthTokensSchema(
+        return AuthTokens(
             name=str(payload["sub"]),
             scopes=str(payload["scopes"]).split()
         )

@@ -16,24 +16,24 @@ class StrategyAlreadyAttachedError(Exception):
         super().__init__(msg)
 
 
-class LoginSchema(BaseModel):
+class LoginCredentials(BaseModel):
     scopes: list[str]
 
 
-class RegisterSchema(BaseModel):
+class RegisterCredentials(BaseModel):
     pass
 
 
-class AddStrategySchema(BaseModel):
+class AddStrategyCredentials(BaseModel):
     pass
 
 
-LoginSchemaType = TypeVar("LoginSchemaType", bound=LoginSchema)
-RegisterSchemaType = TypeVar("RegisterSchemaType", bound=RegisterSchema)
-AddStrategySchemaType = TypeVar("AddStrategySchemaType", bound=AddStrategySchema)
+LoginCredentialsType = TypeVar("LoginCredentialsType", bound=LoginCredentials)
+RegisterCredentialsType = TypeVar("RegisterCredentialsType", bound=RegisterCredentials)
+AddStrategyCredentialsType = TypeVar("AddStrategyCredentialsType", bound=AddStrategyCredentials)
 
 
-class AuthStrategy(Generic[LoginSchemaType, RegisterSchemaType, AddStrategySchemaType]):
+class AuthStrategy(Generic[LoginCredentialsType, RegisterCredentialsType, AddStrategyCredentialsType]):
     """
     Authentication strategy implements the way user registers their accounts, attaches new strategy for their account
     and uses it to login.
@@ -43,7 +43,7 @@ class AuthStrategy(Generic[LoginSchemaType, RegisterSchemaType, AddStrategySchem
     """
 
     @abstractmethod
-    def register(self, schema: RegisterSchemaType) -> User:
+    def register(self, schema: RegisterCredentialsType) -> User:
         """
         Register new account with credentials and add new authentication strategy to it.
 
@@ -54,7 +54,7 @@ class AuthStrategy(Generic[LoginSchemaType, RegisterSchemaType, AddStrategySchem
         """
 
     @abstractmethod
-    def add_auth_strategy(self, schema: AddStrategySchemaType):
+    def add_auth_strategy(self, schema: AddStrategyCredentialsType):
         """
         Add new authentication strategy to user's account.
 
@@ -63,7 +63,7 @@ class AuthStrategy(Generic[LoginSchemaType, RegisterSchemaType, AddStrategySchem
         """
 
     @abstractmethod
-    def login_for_user_model_or_fail(self, schema: LoginSchemaType) -> User:
+    def login_for_user_model_or_fail(self, schema: LoginCredentialsType) -> User:
         """
         Verify given credentials for login and return associated user model or fail.
 

@@ -2,14 +2,14 @@ from .base import (
     InvalidCredentialsError,
     StrategyAlreadyAttachedError,
     UserIsNotPermittedError,
-    LoginSchemaType,
-    RegisterSchemaType,
-    AddStrategySchemaType,
+    LoginCredentialsType,
+    RegisterCredentialsType,
+    AddStrategyCredentialsType,
     AuthStrategy
 )
 from .telegram import (
-    TelegramRegisterSchema,
-    TelegramAddStrategySchema,
-    TelegramLoginSchema,
+    TelegramRegisterCredentials,
+    TelegramAddStrategyCredentials,
+    TelegramLoginCredentials,
     TelegramAuthStrategy
 )

@@ -6,26 +6,30 @@ from app.core.models import User, TelegramAuthEntry
 from app.core.register import RegistrationService, UserRegisterSchema
 from app.core.repos import TelegramAuthRepo, UserRepo
 from app.core.security import UserIsNotPermittedError
-from .base import AuthStrategy, InvalidCredentialsError, LoginSchema, RegisterSchema, \
-    AddStrategySchema
+from .base import AuthStrategy, InvalidCredentialsError, LoginCredentials, RegisterCredentials, \
+    AddStrategyCredentials
 
 
-class TelegramRegisterSchema(RegisterSchema):
+class TelegramRegisterCredentials(RegisterCredentials):
     # 'scopes' inherited from LoginSchema.
     name: str
     token: str
 
 
-class TelegramAddStrategySchema(AddStrategySchema):
+class TelegramAddStrategyCredentials(AddStrategyCredentials):
     name: str
     token: str
 
 
-class TelegramLoginSchema(LoginSchema):
+class TelegramLoginCredentials(LoginCredentials):
     token: str
 
 
-class TelegramAuthStrategy(AuthStrategy[TelegramLoginSchema, TelegramRegisterSchema, TelegramAddStrategySchema]):
+class TelegramAuthStrategy(AuthStrategy[
+                               TelegramLoginCredentials,
+                               TelegramRegisterCredentials,
+                               TelegramAddStrategyCredentials
+                           ]):
     def __init__(
             self,
             tg_auth_repo: TelegramAuthRepo = Depends(),
@@ -46,7 +50,7 @@ class TelegramAuthStrategy(AuthStrategy[TelegramLoginSchema, TelegramRegisterSch
 
         return str(payload["sub"])
 
-    def register(self, schema: TelegramRegisterSchema) -> User:
+    def register(self, schema: TelegramRegisterCredentials) -> User:
         # Raises InvalidCredentialsError.
         tg_user_id = self._get_sub_from_token(schema.token)
 
@@ -68,7 +72,7 @@ class TelegramAuthStrategy(AuthStrategy[TelegramLoginSchema, TelegramRegisterSch
 
         return user_from_db
 
-    def add_auth_strategy(self, schema: TelegramAddStrategySchema):
+    def add_auth_strategy(self, schema: TelegramAddStrategyCredentials):
         # Find user.
         if (user := self.user_repo.get_by_name(schema.name)) is None:
             raise InvalidCredentialsError()
@@ -82,7 +86,7 @@ class TelegramAuthStrategy(AuthStrategy[TelegramLoginSchema, TelegramRegisterSch
             user=user
         ))
 
-    def login_for_user_model_or_fail(self, schema: TelegramLoginSchema) -> User:
+    def login_for_user_model_or_fail(self, schema: TelegramLoginCredentials) -> User:
         # Raises InvalidCredentialsError.
         tg_user_id = self._get_sub_from_token(schema.token)
 

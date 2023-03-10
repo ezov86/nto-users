@@ -6,7 +6,7 @@ class UserIsNotPermittedError(Exception):
         super().__init__(msg)
 
 
-class AuthenticatedUserSchema(BaseModel):
+class AuthenticatedUser(BaseModel):
     name: str
     scopes: list[str]
 

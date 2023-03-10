@@ -1,0 +1,36 @@
+[alembic]
+db_url=postgresql://user:password@nto-postgres:5432/users
+db_dev_url=postgresql://user:password@localhost:5432/users
+
+[sqlalchemy]
+db_url=postgresql://user:password@nto-postgres:5432/users
+
+[user_default]
+scopes=
+
+[email]
+smtp_tls=false
+smtp_host=smtp.freesmtpservers.com
+smtp_port=25
+smtp_user=
+smtp_password=
+smtp_from=no-reply@localhost
+
+verify_url=http://localhost/verify
+verify_token_expire=1
+verify_token_secret=<RUN openssl rand -hex 32>
+
+pwd_update_url=http://localhost/update-password
+pwd_update_token_expire=1
+pwd_update_token_secret=<RUN openssl rand -hex 32>
+
+[telegram]
+token_secret=<RUN openssl rand -hex 32>
+token_expire=1
+
+[oauth]
+access_token_expire=1
+access_token_secret=<RUN openssl rand -hex 32>
+
+refresh_token_expire=1
+refresh_token_secret=<RUN openssl rand -hex 32>

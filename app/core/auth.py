@@ -64,7 +64,7 @@ class AuthenticationService:
 
         :param credentials: credentials for auth strategy.
 
-        :raises InvalidCredentialsError: invalid credentials.
+        :raises InvalidAuthDataError: invalid credentials.
         :raises UserIsNotPermittedError: user is not permitted to authorize.
 
         :return: access and refresh token.

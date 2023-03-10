@@ -4,14 +4,18 @@ import pytest
 from starlette.testclient import TestClient
 
 from .config import set_config
-from .utils import assert_all_users, assert_all_tg_auth_entries, assert_user_dict
+from .utils import assert_all_users, assert_all_tg_auth_entries, assert_user_dict, create_model, rand_str
 
 from app.core.crypto import encode_token
 from app.core.models import User, TelegramAuthEntry
 
 TG_SECRET = "tg_secret"
-TG_USER_ID = "12345"
 TG_SCOPES = ["scope1", "scope2"]
+
+
+@pytest.fixture(scope="module")
+def rand_tg_user_id() -> str:
+    return rand_str()
 
 
 @pytest.fixture(autouse=True)
@@ -27,14 +31,28 @@ def tg_config():
 
 
 @pytest.fixture(scope="module")
-def tg_token() -> str:
-    return encode_token(TG_USER_ID, TG_SECRET)
+def tg_token(rand_tg_user_id: str) -> str:
+    return encode_token(rand_tg_user_id, TG_SECRET)
+
+
+@pytest.fixture()
+def stub_tg_auth(
+        rand_tg_user_id: str,
+        stub_user: User
+) -> TelegramAuthEntry:
+    tg_auth_entry = create_model(TelegramAuthEntry(
+        tg_user_id=rand_tg_user_id,
+        user_id=stub_user.id
+    ))
+
+    return tg_auth_entry
 
 
 def test_tg_register(
         client: TestClient,
         tg_token: str,
-        rand_username
+        rand_username: str,
+        rand_tg_user_id: str
 ):
     resp = client.post(
         url="/tg/register",
@@ -61,7 +79,7 @@ def test_tg_register(
     )])
 
     assert_all_tg_auth_entries([TelegramAuthEntry(
-        tg_user_id=TG_USER_ID,
+        tg_user_id=rand_tg_user_id,
         user_id=resp.json()["id"]
     )])
 
@@ -89,6 +107,23 @@ def test_tg_register_existing_user(
         url="/tg/register",
         json={
             "name": stub_user.name,
+            "token": tg_token
+        }
+    )
+
+    assert resp.status_code == 400
+
+
+def test_tg_register_existing_tg_user(
+        client: TestClient,
+        stub_tg_auth: TelegramAuthEntry,
+        tg_token: str,
+        rand_username: str
+):
+    resp = client.post(
+        url="/tg/register",
+        json={
+            "name": rand_username,
             "token": tg_token
         }
     )

@@ -73,24 +73,25 @@ def assert_all_tg_auth_entries(expected: list[TelegramAuthEntry]):
     _assert_all_models(TelegramAuthEntry, assert_tg_auth_entry, expected)
 
 
-def random_string() -> str:
+def rand_str() -> str:
     return "".join(random.choices(
-        string.ascii_uppercase + string.digits,
-        k=random.randint(3, 16))
-    )
+        string.ascii_uppercase + string.digits + string.ascii_lowercase,
+        k=20
+    ))
 
 
 def get_stub_user() -> User:
     return User(
-        name=random_string(),
+        name=rand_str(),
         is_disabled=False,
         scopes=[],
         registered_at=datetime.utcnow()
     )
 
-def create_user(user: User) -> User:
+
+def create_model(model) -> any:
     session = next(get_session())
-    session.add(user)
+    session.add(model)
     session.commit()
-    session.refresh(user)
-    return user
+    session.refresh(model)
+    return model

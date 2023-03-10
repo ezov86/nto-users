@@ -10,18 +10,18 @@ from .base import AuthStrategy, InvalidCredentialsError, LoginSchema, RegisterSc
     AddStrategySchema
 
 
-class TelegramRegisterSchema(LoginSchema):
+class TelegramRegisterSchema(RegisterSchema):
     # 'scopes' inherited from LoginSchema.
     name: str
     token: str
 
 
-class TelegramAddStrategySchema(RegisterSchema):
+class TelegramAddStrategySchema(AddStrategySchema):
     name: str
     token: str
 
 
-class TelegramLoginSchema(AddStrategySchema):
+class TelegramLoginSchema(LoginSchema):
     token: str
 
 

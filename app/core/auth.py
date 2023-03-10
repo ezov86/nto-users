@@ -116,10 +116,10 @@ class AuthenticationService:
         payload = decode_jwt(
             refresh_token,
             ["exp", "scopes"],
-            self.config.oauth.access_token_secret
+            self.config.oauth.refresh_token_secret
         )
 
-        return AuthTokens(
-            name=str(payload["sub"]),
-            scopes=str(payload["scopes"]).split()
+        return self._encode_tokens(
+            str(payload["sub"]),
+            str(payload["scopes"]).split()
         )

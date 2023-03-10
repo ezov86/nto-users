@@ -26,7 +26,7 @@ RegisterSchemaType = TypeVar("RegisterSchemaType", bound=BaseModel)
 AddStrategySchemaType = TypeVar("AddStrategySchemaType", bound=BaseModel)
 
 
-class BaseStrategy(Generic[LoginSchemaType, RegisterSchemaType, AddStrategySchemaType]):
+class BaseAuthStrategy(Generic[LoginSchemaType, RegisterSchemaType, AddStrategySchemaType]):
     """
     Authentication strategy implements the way user registers their accounts, attaches new strategy for their account
     and uses it to login.

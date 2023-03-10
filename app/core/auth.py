@@ -2,7 +2,7 @@ from fastapi import Depends
 from pydantic import BaseModel
 
 from app.config import Config, get_config
-from app.core.crypto import encode_token, decode_token
+from app.core.crypto import encode_jwt, decode_jwt
 from app.core.models import User
 from app.core.security import UserIsNotPermittedError, AuthenticatedUser
 from app.core.strategies import LoginCredentialsType
@@ -29,14 +29,14 @@ class AuthenticationService:
     def _encode_tokens(self, username: str, scopes: list[str]) -> AuthTokens:
         scopes_str = " ".join(scopes)
 
-        access_token = encode_token(
+        access_token = encode_jwt(
             username,
             self.config.oauth.access_token_secret,
             self.config.oauth.access_token_expire,
             {"scopes": scopes_str}
         )
 
-        refresh_token = encode_token(
+        refresh_token = encode_jwt(
             username,
             self.config.oauth.refresh_token_secret,
             self.config.oauth.refresh_token_expire,
@@ -88,7 +88,7 @@ class AuthenticationService:
         """
 
         # Raises InvalidTokenError
-        payload = decode_token(
+        payload = decode_jwt(
             access_token,
             ["exp", "scopes"],
             self.config.oauth.access_token_secret
@@ -111,7 +111,7 @@ class AuthenticationService:
         """
 
         # Raises InvalidTokenError
-        payload = decode_token(
+        payload = decode_jwt(
             refresh_token,
             ["exp", "scopes"],
             self.config.oauth.access_token_secret

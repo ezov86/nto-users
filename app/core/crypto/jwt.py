@@ -10,7 +10,7 @@ class InvalidTokenError(Exception):
         super().__init__("Invalid token.")
 
 
-def encode_token(sub: str, secret: str, expire_in_seconds: int | None = None, extra_payload: dict = None) -> str:
+def encode_jwt(sub: str, secret: str, expire_in_seconds: int | None = None, extra_payload: dict = None) -> str:
     """
     Encodes and encrypts token.
 
@@ -36,7 +36,7 @@ def encode_token(sub: str, secret: str, expire_in_seconds: int | None = None, ex
     return jwt.encode(payload, secret, _ALGORITHM)
 
 
-def decode_token(token: str, required_payload_fields: list[str], secret: str) -> dict:
+def decode_jwt(token: str, required_payload_fields: list[str], secret: str) -> dict:
     """
     Decodes and verifies given token.
 

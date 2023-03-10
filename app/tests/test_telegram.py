@@ -6,7 +6,7 @@ from starlette.testclient import TestClient
 from .config import set_config
 from .utils import assert_all_users, assert_all_tg_auth_entries, assert_user_dict, create_model, rand_str
 
-from app.core.crypto import encode_token
+from app.core.crypto import encode_jwt
 from app.core.models import User, TelegramAuthEntry
 
 TG_SECRET = "tg_secret"
@@ -32,7 +32,7 @@ def tg_config():
 
 @pytest.fixture(scope="module")
 def tg_token(rand_tg_user_id: str) -> str:
-    return encode_token(rand_tg_user_id, TG_SECRET)
+    return encode_jwt(rand_tg_user_id, TG_SECRET)
 
 
 @pytest.fixture()

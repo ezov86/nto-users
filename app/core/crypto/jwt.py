@@ -7,7 +7,7 @@ _ALGORITHM = "HS256"
 
 class InvalidJWTError(Exception):
     def __init__(self):
-        super().__init__("Invalid token")
+        super().__init__("Invalid JWT")
 
 
 def encode_jwt(sub: str, secret: str, expire_in_seconds: int | None = None, extra_payload: dict = None) -> str:

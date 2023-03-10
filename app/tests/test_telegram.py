@@ -203,3 +203,23 @@ def test_tg_login_with_invalid_token(
     assert resp.json() == {
         "detail": "Invalid authentication data"
     }
+
+
+def test_tg_login_with_not_permitted_scope(
+        client: TestClient,
+        stub_tg_auth: tuple[TelegramAuthEntry, User],
+        oauth_config,
+        read_only
+):
+    resp = client.post(
+        url="/tg/login",
+        json={
+            "scope": "admin scope1",
+            "token": encode_tg_token(stub_tg_auth[0].tg_user_id)
+        }
+    )
+
+    assert resp.status_code == 403
+    assert resp.json() == {
+        "detail": "User is not permitted"
+    }

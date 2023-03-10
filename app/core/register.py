@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from app.config import Config, get_config
 from app.core.models import User
-from app.core.repos import UserRepo
+from app.core.repos import UserRepo, ModelNotUniqueError
 from app.core.strategies import AuthStrategy
 from app.core.strategies import AddStrategyDataType
 
@@ -34,10 +34,18 @@ class RegistrationService:
         self.config = config
 
     def register(self, strategy: AuthStrategy, auth_data: AddStrategyDataType) -> User:
-        if self.user_repo.get_by_name(auth_data.name) is not None:
-            raise UserAlreadyExistsError()
+        """
+        Register user using given auth strategy.
+        Auth data will be attached to created user.
 
-        strategy.check_can_add_to_user_or_fail(auth_data)
+        :param strategy: auth strategy.
+        :param auth_data: data for auth strategy.
+
+        :raises UserAlreadyExistsError: user with given name already exists.
+        :raises InvalidAuthDataError: invalid auth data.
+
+        :return: created user.
+        """
 
         user_for_db = User(
             name=auth_data.name,
@@ -46,6 +54,11 @@ class RegistrationService:
             registered_at=datetime.utcnow()
         )
 
-        strategy.add_to_user(user_for_db, auth_data)
+        try:
+            # Will also add to DB user in one commit.
+            # Raises InvalidAuthDataError.
+            strategy.add_to_user(user_for_db, auth_data)
+        except ModelNotUniqueError:
+            raise UserAlreadyExistsError()
 
         return self.user_repo.create(user_for_db)

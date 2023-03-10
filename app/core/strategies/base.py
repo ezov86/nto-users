@@ -12,7 +12,7 @@ class InvalidAuthDataError(Exception):
 
 
 class StrategyAlreadyAttachedError(Exception):
-    def __init__(self, msg="Authentication strategy was already attached to the user."):
+    def __init__(self, msg="User already has this auth strategy."):
         super().__init__(msg)
 
 
@@ -31,25 +31,19 @@ AddStrategyDataType = TypeVar("AddStrategyDataType", bound=AddStrategyData)
 class AuthStrategy(Generic[LoginCredentialsType, AddStrategyDataType]):
     """
     Authentication strategy implements the way of user is authenticated.
-    It also implements the way user can add required auth data.
+    It also implements the way user can add needed auth data.
     """
 
     @abstractmethod
-    def check_can_add_to_user_or_fail(self, data: AddStrategyDataType):
+    def add_to_user(self, user: User, data: AddStrategyDataType):
         """
-        Check that given registration data is valid or fail.
-        If this method passes without raises, then it is safe to call register().
+        Add new authentication strategy to existing/new user's account.
+
+        :param user: user model, if was not added to db, then method will add it.
+        :param data: data.
 
         :raises InvalidAuthDataError: invalid data.
-        """
-
-    @abstractmethod
-    def add_to_user(self, user: User, date: AddStrategyDataType):
-        """
-        Add new authentication strategy to user's account.
-
-        :raises StrategyAlreadyAttachedError: strategy is already attached to the user.
-        :raises InvalidAuthDataError: invalid data.
+        :raises repos.ModelNotUniqueError: auth data is not unique.
         """
 
     @abstractmethod

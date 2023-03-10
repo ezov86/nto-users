@@ -43,19 +43,12 @@ class TelegramAuthStrategy(AuthStrategy[TelegramLoginCredentials, TelegramAddStr
 
         return str(payload["sub"])
 
-    def check_can_add_to_user_or_fail(self, data: TelegramAddStrategyData):
-        # Raises InvalidAuthDataError.
-        tg_user_id = self._get_sub_from_token(data.token)
-
-        # Check that tg_user_id is already in db.
-        if self.tg_auth_repo.get_by_tg_user_id(tg_user_id) is not None:
-            raise InvalidAuthDataError()
-
     def add_to_user(self, user: User, data: TelegramAddStrategyData):
         # Raises InvalidAuthDataError.
         tg_user_id = self._get_sub_from_token(data.token)
 
         # Add new strategy.
+        # Raises NotUniqueError.
         self.tg_auth_repo.create(TelegramAuthEntry(
             tg_user_id=tg_user_id,
             user=user

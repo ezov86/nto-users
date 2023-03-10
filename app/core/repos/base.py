@@ -1,5 +1,6 @@
 from typing import TypeVar, Generic, Type
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core import models
@@ -7,6 +8,11 @@ from app.core import models
 
 class ModelNotFoundError(Exception):
     def __init__(self, msg="Model not found"):
+        super().__init__(msg)
+
+
+class ModelNotUniqueError(Exception):
+    def __init__(self, msg="Model is not unique"):
         super().__init__(msg)
 
 
@@ -29,9 +35,16 @@ class BaseRepo(Generic[ModelType]):
         return self.session.query(self.model).offset(offset).limit(limit).all()
 
     def create(self, obj: ModelType) -> ModelType:
-        self.session.add(obj)
-        self.session.commit()
-        self.session.refresh(obj)
+        """
+        :raises NotUniqueError: given model is not unique (if it should be).
+        """
+        try:
+            self.session.add(obj)
+            self.session.commit()
+            self.session.refresh(obj)
+        except IntegrityError:
+            raise ModelNotUniqueError()
+
         return obj
 
     def update(self, obj: ModelType) -> ModelType:

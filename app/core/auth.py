@@ -56,6 +56,8 @@ class AuthenticationService:
             if request_scope not in user.scopes:
                 return False
 
+        return True
+
     def login_for_tokens(self, credentials: LoginCredentialsType) -> AuthTokens:
         """
         Login for access and refresh token.

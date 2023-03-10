@@ -5,7 +5,7 @@ from app.core.models import User
 from app.main import app
 from app.tests.config import override_config, reset_config
 from app.tests.db import override_db, finalize_overriden_db, ignore_db_readonly, truncate_tables, db_set_readonly_mode
-from app.tests.utils import random_string, create_user, get_stub_user
+from app.tests.utils import rand_str, create_model, get_stub_user
 
 
 @pytest.fixture(scope="session")
@@ -42,10 +42,10 @@ def config_cleanup():
 
 @pytest.fixture()
 def rand_username() -> str:
-    return random_string()
+    return rand_str()
 
 
 @pytest.fixture()
 def stub_user() -> User:
     with ignore_db_readonly():
-        return create_user(get_stub_user())
+        return create_model(get_stub_user())

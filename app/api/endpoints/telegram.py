@@ -4,9 +4,9 @@ from pydantic import BaseModel
 from app.api.schemas import username_constr, UserSchema, AuthTokensSchema
 from app.core.auth import AuthenticationService
 from app.core.security import UserIsNotPermittedError
-from app.core.strategies import TelegramRegisterCredentials, TelegramAuthStrategy, InvalidCredentialsError, \
-    TelegramLoginCredentials
-from app.core.register import UserAlreadyExistsError
+from app.core.strategies import TelegramAuthStrategy, InvalidAuthDataError, TelegramLoginCredentials, \
+    TelegramAddStrategyData
+from app.core.register import UserAlreadyExistsError, RegistrationService
 
 tg_router = APIRouter(
     tags=["telegram"]
@@ -29,14 +29,18 @@ class TelegramRegisterSchema(BaseModel):
 )
 def tg_register(
         body: TelegramRegisterSchema,
+        reg_service: RegistrationService = Depends(),
         auth_strategy: TelegramAuthStrategy = Depends(),
 ) -> UserSchema:
     try:
-        user_from_db = auth_strategy.register(TelegramRegisterCredentials(
-            name=body.name,
-            token=body.token
-        ))
-    except (InvalidCredentialsError, UserAlreadyExistsError) as e:
+        user_from_db = reg_service.register(
+            auth_strategy,
+            TelegramAddStrategyData(
+                name=body.name,
+                token=body.token
+            )
+        )
+    except (InvalidAuthDataError, UserAlreadyExistsError) as e:
         raise HTTPException(400, str(e))
 
     return UserSchema(
@@ -63,15 +67,15 @@ class TelegramLoginSchema(BaseModel):
 )
 def tg_login(
         body: TelegramLoginSchema,
-        auth_service: AuthenticationService,
-        auth_strategy: TelegramAuthStrategy
+        auth_service: AuthenticationService = Depends(),
+        auth_strategy: TelegramAuthStrategy = Depends()
 ) -> AuthTokensSchema:
     auth_service.set_strategy(auth_strategy)
     try:
         tokens = auth_service.login_for_tokens(TelegramLoginCredentials(
             token=body.token
         ))
-    except InvalidCredentialsError as e:
+    except InvalidAuthDataError as e:
         raise HTTPException(400, str(e))
     except UserIsNotPermittedError as e:
         raise HTTPException(403, str(e))

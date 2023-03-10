@@ -3,33 +3,26 @@ from fastapi import Depends
 from app.config import get_config, Config
 from app.core.crypto import decode_token, InvalidTokenError
 from app.core.models import User, TelegramAuthEntry
-from app.core.register import RegistrationService, UserRegisterSchema
+from app.core.register import RegistrationService
 from app.core.repos import TelegramAuthRepo, UserRepo
 from app.core.security import UserIsNotPermittedError
-from .base import AuthStrategy, InvalidCredentialsError, LoginCredentials, RegisterCredentials, \
-    AddStrategyCredentials
+from .base import AuthStrategy, LoginCredentials, AddStrategyData, InvalidAuthDataError
 
 
-class TelegramRegisterCredentials(RegisterCredentials):
-    # 'scopes' inherited from LoginSchema.
-    name: str
-    token: str
-
-
-class TelegramAddStrategyCredentials(AddStrategyCredentials):
-    name: str
+class TelegramAddStrategyData(AddStrategyData):
+    # 'name' inherited.
     token: str
 
 
 class TelegramLoginCredentials(LoginCredentials):
+    # 'scopes' inherited.
     token: str
 
 
-class TelegramAuthStrategy(AuthStrategy[
-                               TelegramLoginCredentials,
-                               TelegramRegisterCredentials,
-                               TelegramAddStrategyCredentials
-                           ]):
+class TelegramAuthStrategy(AuthStrategy[TelegramLoginCredentials, TelegramAddStrategyData]):
+    """
+    Authentication via telegram requires only valid Telegram JWT generated on the service side.
+    """
     def __init__(
             self,
             tg_auth_repo: TelegramAuthRepo = Depends(),
@@ -46,39 +39,21 @@ class TelegramAuthStrategy(AuthStrategy[
         try:
             payload = decode_token(token, [], self.config.telegram.token_secret)
         except InvalidTokenError:
-            raise InvalidCredentialsError()
+            raise InvalidAuthDataError()
 
         return str(payload["sub"])
 
-    def register(self, schema: TelegramRegisterCredentials) -> User:
-        # Raises InvalidCredentialsError.
-        tg_user_id = self._get_sub_from_token(schema.token)
+    def check_can_add_to_user_or_fail(self, data: TelegramAddStrategyData):
+        # Raises InvalidAuthDataError.
+        tg_user_id = self._get_sub_from_token(data.token)
 
-        # Check that token is already in db.
+        # Check that tg_user_id is already in db.
         if self.tg_auth_repo.get_by_tg_user_id(tg_user_id) is not None:
-            raise InvalidCredentialsError()
+            raise InvalidAuthDataError()
 
-        # Raises UserAlreadyExistsError.
-        user_from_db = self.reg.register(UserRegisterSchema(
-            name=schema.name,
-            scopes=self.config.user_default.scopes
-        ))
-
-        # Now create auth entry.
-        self.tg_auth_repo.create(TelegramAuthEntry(
-            tg_user_id=tg_user_id,
-            user=user_from_db
-        ))
-
-        return user_from_db
-
-    def add_auth_strategy(self, schema: TelegramAddStrategyCredentials):
-        # Find user.
-        if (user := self.user_repo.get_by_name(schema.name)) is None:
-            raise InvalidCredentialsError()
-
-        # Raises InvalidCredentialsError.
-        tg_user_id = self._get_sub_from_token(schema.token)
+    def add_to_user(self, user: User, data: TelegramAddStrategyData):
+        # Raises InvalidAuthDataError.
+        tg_user_id = self._get_sub_from_token(data.token)
 
         # Add new strategy.
         self.tg_auth_repo.create(TelegramAuthEntry(
@@ -87,12 +62,12 @@ class TelegramAuthStrategy(AuthStrategy[
         ))
 
     def login_for_user_model_or_fail(self, schema: TelegramLoginCredentials) -> User:
-        # Raises InvalidCredentialsError.
+        # Raises InvalidAuthDataError.
         tg_user_id = self._get_sub_from_token(schema.token)
 
         # Find auth entry.
         if (tg_auth_entry := self.tg_auth_repo.get_by_tg_user_id(tg_user_id)) is None:
-            raise InvalidCredentialsError()
+            raise InvalidAuthDataError()
 
         # Check user is permitted to authenticate.
         if tg_auth_entry.user.is_disabled:

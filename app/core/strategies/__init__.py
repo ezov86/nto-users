@@ -1,14 +1,12 @@
 from .base import (
-    InvalidCredentialsError,
+    InvalidAuthDataError,
     StrategyAlreadyAttachedError,
     LoginCredentialsType,
-    RegisterCredentialsType,
-    AddStrategyCredentialsType,
+    AddStrategyDataType,
     AuthStrategy
 )
 from .telegram import (
-    TelegramRegisterCredentials,
-    TelegramAddStrategyCredentials,
+    TelegramAddStrategyData,
     TelegramLoginCredentials,
     TelegramAuthStrategy
 )

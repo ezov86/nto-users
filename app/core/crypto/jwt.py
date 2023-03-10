@@ -5,9 +5,9 @@ from datetime import datetime, timedelta
 _ALGORITHM = "HS256"
 
 
-class InvalidTokenError(Exception):
+class InvalidJWTError(Exception):
     def __init__(self):
-        super().__init__("Invalid token.")
+        super().__init__("Invalid token")
 
 
 def encode_jwt(sub: str, secret: str, expire_in_seconds: int | None = None, extra_payload: dict = None) -> str:
@@ -52,11 +52,11 @@ def decode_jwt(token: str, required_payload_fields: list[str], secret: str) -> d
     try:
         payload = jwt.decode(token, secret, _ALGORITHM)
     except Exception:  # pyjwt may raise many exceptions (sometimes ValueError, for example).
-        raise InvalidTokenError()
+        raise InvalidJWTError()
 
 
     for required in required_payload_fields + ["sub"]:
         if required not in payload:
-            raise InvalidTokenError()
+            raise InvalidJWTError()
 
     return payload

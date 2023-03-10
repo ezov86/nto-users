@@ -1,7 +1,7 @@
 from fastapi import Depends
 
 from app.config import get_config, Config
-from app.core.crypto import decode_jwt, InvalidTokenError
+from app.core.crypto import decode_jwt, InvalidJWTError
 from app.core.models import User, TelegramAuthEntry
 from app.core.register import RegistrationService
 from app.core.repos import TelegramAuthRepo, UserRepo
@@ -38,7 +38,7 @@ class TelegramAuthStrategy(AuthStrategy[TelegramLoginCredentials, TelegramAddStr
     def _get_sub_from_token(self, token: str) -> str:
         try:
             payload = decode_jwt(token, [], self.config.telegram.token_secret)
-        except InvalidTokenError:
+        except InvalidJWTError:
             raise InvalidAuthDataError()
 
         return str(payload["sub"])

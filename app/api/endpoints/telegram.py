@@ -54,7 +54,7 @@ def tg_register(
 
 class TelegramLoginSchema(BaseModel):
     token: str
-    scopes: list[str]
+    scope: str
 
 
 @tg_router.post(
@@ -75,7 +75,7 @@ def tg_login(
     try:
         tokens = auth_service.login_for_tokens(TelegramLoginCredentials(
             token=body.token,
-            scopes=body.scopes
+            scopes=body.scope.split()
         ))
     except InvalidAuthDataError as e:
         raise HTTPException(400, str(e))

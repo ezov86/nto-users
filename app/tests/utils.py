@@ -84,7 +84,7 @@ def get_stub_user() -> User:
     return User(
         name=rand_str(),
         is_disabled=False,
-        scopes=[],
+        scopes=["scope1", "scope2"],
         registered_at=datetime.utcnow()
     )
 

@@ -27,10 +27,10 @@ Base.metadata.create_all(bind=engine)
 session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-@event.listens_for(session_local, "before_flush")
-def _before_flush(_session, _flush_context, _instances):
+@event.listens_for(session_local, "after_flush")
+def after_flush(_session, _flush_context):
     if readonly:
-        raise AssertionError("Flush occurred in DB readonly mode.")
+        raise AssertionError("Flush occurred in DB readonly mode")
 
 
 def get_session():

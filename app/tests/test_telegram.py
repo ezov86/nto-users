@@ -30,6 +30,10 @@ def tg_config():
     )
 
 
+def encode_tg_token(tg_user_id: str) -> str:
+    return encode_jwt(tg_user_id, TG_SECRET)
+
+
 @pytest.fixture(scope="module")
 def tg_token(rand_tg_user_id: str) -> str:
     return encode_jwt(rand_tg_user_id, TG_SECRET)
@@ -39,13 +43,13 @@ def tg_token(rand_tg_user_id: str) -> str:
 def stub_tg_auth(
         rand_tg_user_id: str,
         stub_user: User
-) -> TelegramAuthEntry:
+) -> tuple[TelegramAuthEntry, User]:
     tg_auth_entry = create_model(TelegramAuthEntry(
         tg_user_id=rand_tg_user_id,
         user_id=stub_user.id
     ))
 
-    return tg_auth_entry
+    return tg_auth_entry, stub_user
 
 
 def test_tg_register(
@@ -85,7 +89,8 @@ def test_tg_register(
 
 
 def test_tg_register_with_invalid_token(
-        client: TestClient
+        client: TestClient,
+        read_only
 ):
     resp = client.post(
         url="/tg/register",
@@ -104,7 +109,8 @@ def test_tg_register_with_invalid_token(
 def test_tg_register_existing_user(
         client: TestClient,
         stub_user: User,
-        tg_token
+        tg_token,
+        read_only
 ):
     resp = client.post(
         url="/tg/register",
@@ -122,9 +128,10 @@ def test_tg_register_existing_user(
 
 def test_tg_register_existing_tg_user(
         client: TestClient,
-        stub_tg_auth: TelegramAuthEntry,
+        stub_tg_auth: tuple[TelegramAuthEntry, User],
         tg_token: str,
-        rand_username: str
+        rand_username: str,
+        read_only
 ):
     resp = client.post(
         url="/tg/register",
@@ -137,4 +144,62 @@ def test_tg_register_existing_tg_user(
     assert resp.status_code == 400
     assert resp.json() == {
         "detail": "User already exists"
+    }
+
+
+def test_tg_login(
+        client: TestClient,
+        stub_tg_auth: tuple[TelegramAuthEntry, User],
+        oauth_config
+):
+    resp = client.post(
+        url="/tg/login",
+        json={
+            "scope": "scope1 scope2",
+            "token": encode_tg_token(stub_tg_auth[0].tg_user_id)
+        }
+    )
+
+    assert resp.status_code == 200
+
+    access, refresh = resp.json()["access"], resp.json()["refresh"]
+
+    # Check access token is ok.
+    resp = client.get(
+        url="/tokens/user",
+        headers=[("Authorization", "Bearer " + access)]
+    )
+
+    assert resp.status_code == 200
+    assert resp.json() == {
+        "name": stub_tg_auth[1].name,
+        "scopes": ["scope1", "scope2"]
+    }
+
+    # Check refresh token is ok.
+    resp = client.post(
+        url="/tokens/refresh",
+        headers=[("Refresh-Token", refresh)]
+    )
+
+    assert resp.status_code == 200
+
+
+def test_tg_login_with_invalid_token(
+        client: TestClient,
+        stub_tg_auth: tuple[TelegramAuthEntry, User],
+        oauth_config,
+        read_only
+):
+    resp = client.post(
+        url="/tg/login",
+        json={
+            "scope": "scope1 scope2",
+            "token": "not a valid token"
+        }
+    )
+
+    assert resp.status_code == 400
+    assert resp.json() == {
+        "detail": "Invalid authentication data"
     }

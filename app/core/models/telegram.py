@@ -12,7 +12,7 @@ class TelegramAuthEntry(Base):
     __tablename__ = "telegram_auth"
 
     id = Column(Integer, primary_key=True, index=True)
-    tg_user_id = Column(String, index=True, nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    tg_user_id = Column(String, index=True, unique=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
 
     user = relationship("User")

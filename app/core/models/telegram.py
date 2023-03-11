@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, Integer, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from .base import Base
 
@@ -11,8 +11,8 @@ class TelegramAuthEntry(Base):
 
     __tablename__ = "telegram_auth"
 
-    id = Column(Integer, primary_key=True, index=True)
-    tg_user_id = Column(String, index=True, unique=True, nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    tg_user_id: Mapped[str] = mapped_column(index=True, unique=True, nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True, nullable=False)
 
     user = relationship("User")

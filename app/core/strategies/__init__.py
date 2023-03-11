@@ -10,3 +10,8 @@ from .telegram import (
     TelegramLoginCredentials,
     TelegramAuthStrategy
 )
+from .email import (
+    EmailAuthStrategy,
+    EmailAddStrategyData,
+    EmailLoginCredentials
+)

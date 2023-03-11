@@ -51,6 +51,7 @@ class AuthStrategy(Generic[LoginCredentialsType, AddStrategyDataType]):
     def login_for_user_model_or_fail(self, credentials: LoginCredentialsType) -> User:
         """
         Verify given credentials for login and return associated user model or fail.
+        No scopes check is guaranteed.
 
         :raises InvalidAuthDataError: credentials are invalid.
         :raises UserIsNotPermittedError: user is not permitted to authorize.

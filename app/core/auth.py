@@ -6,7 +6,7 @@ from app.config import Config, get_config
 from app.core.crypto import encode_jwt, decode_jwt, InvalidJWTError
 from app.core.models import User
 from app.core.repos import UserRepo
-from app.core.security import UserIsNotPermittedError, AuthenticatedUser
+from app.core.security import UserIsNotPermittedError, AuthenticatedUser, get_valid_scopes, are_scopes_valid
 from app.core.strategies import AuthStrategy
 from app.core.strategies import LoginCredentialsType
 
@@ -44,16 +44,6 @@ class AuthenticationService:
             refresh=refresh_token
         )
 
-    def _check_requested_scopes(self, user: User, scopes: list[str]) -> bool:
-        if "admin" in user.scopes:
-            return True
-
-        for request_scope in scopes:
-            if request_scope not in user.scopes:
-                return False
-
-        return True
-
     def login_for_tokens(self, strategy: AuthStrategy, credentials: LoginCredentialsType) -> AuthTokens:
         """
         Login for access and refresh token.
@@ -70,10 +60,30 @@ class AuthenticationService:
         # Raises InvalidCredentialsError, UserIsNotPermittedError.
         user = strategy.login_for_user_model_or_fail(credentials)
 
-        if not self._check_requested_scopes(user, credentials.scopes):
+        verified_scopes = get_valid_scopes(credentials.scopes, user)
+
+        return self._encode_tokens(user.name, verified_scopes)
+
+    def _validate_token_payload(self, username: str, scopes: list[str]) -> User:
+        """
+        Passes payload is valid or fails.
+
+        :raises InvalidJWTError: user not found.
+        :raises UserIsNotPermittedError: user is not permitted in scopes.
+
+        :return: token's owner.
+        """
+
+        if (user := self.user_repo.get_by_name(username)) is None:
+            raise InvalidJWTError()
+
+        if user.is_disabled:
             raise UserIsNotPermittedError()
 
-        return self._encode_tokens(user.name, credentials.scopes)
+        if not are_scopes_valid(scopes, user):
+            raise UserIsNotPermittedError()
+
+        return user
 
     def get_auth_user_from_access_token(self, access_token: str) -> AuthenticatedUser:
         """
@@ -82,6 +92,7 @@ class AuthenticationService:
         :param access_token: access token.
 
         :raises InvalidJWTError: invalid token.
+        :raises UserIsNotPermittedError: user is not permitted to authorize.
 
         :return: authenticated user.
         """
@@ -93,14 +104,15 @@ class AuthenticationService:
             self.config.oauth.access_token_secret
         )
 
-        name = str(payload["sub"])
+        username = str(payload["sub"])
+        scopes = str(payload["scopes"]).split()
 
-        if (user := self.user_repo.get_by_name(name)) is None:
-            raise InvalidJWTError()
+        # Raises InvalidJWTError, UserIsNotPermittedError.
+        user = self._validate_token_payload(username, scopes)
 
         return AuthenticatedUser(
-            name=name,
-            scopes=str(payload["scopes"]).split(),
+            name=username,
+            scopes=scopes,
             user=user
         )
 
@@ -111,6 +123,7 @@ class AuthenticationService:
         :param refresh_token: old refresh token.
 
         :raises InvalidJWTError: invalid token.
+        :raises UserIsNotPermittedError: user is not permitted to authorize.
 
         :return: new access and refresh token.
         """
@@ -122,7 +135,10 @@ class AuthenticationService:
             self.config.oauth.refresh_token_secret
         )
 
-        return self._encode_tokens(
-            str(payload["sub"]),
-            str(payload["scopes"]).split()
-        )
+        username = str(payload["sub"])
+        scopes = str(payload["scopes"]).split()
+
+        # Raises InvalidJWTError, UserIsNotPermittedError.
+        self._validate_token_payload(username, scopes)
+
+        return self._encode_tokens(username, scopes)

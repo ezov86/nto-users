@@ -48,8 +48,19 @@ def stub_tg_auth(
         tg_user_id=rand_tg_user_id,
         user_id=stub_user.id
     ))
-
     return tg_auth_entry, stub_user
+
+
+@pytest.fixture()
+def stub_disabled_tg_auth(
+        rand_tg_user_id: str,
+        stub_disabled_user: User
+) -> tuple[TelegramAuthEntry, User]:
+    tg_auth_entry = create_model(TelegramAuthEntry(
+        tg_user_id=rand_tg_user_id,
+        user_id=stub_disabled_user.id
+    ))
+    return tg_auth_entry, stub_disabled_user
 
 
 def test_tg_register(
@@ -155,7 +166,7 @@ def test_tg_login(
     resp = client.post(
         url="/tg/login",
         json={
-            "scope": "scope1 scope2",
+            "scope": "scope1 scope2 admin",
             "token": encode_tg_token(stub_tg_auth[0].tg_user_id)
         }
     )
@@ -205,17 +216,17 @@ def test_tg_login_with_invalid_token(
     }
 
 
-def test_tg_login_with_not_permitted_scope(
+def test_tg_login_disabled_user(
         client: TestClient,
-        stub_tg_auth: tuple[TelegramAuthEntry, User],
+        stub_disabled_tg_auth: tuple[TelegramAuthEntry, User],
         oauth_config,
         read_only
 ):
     resp = client.post(
         url="/tg/login",
         json={
-            "scope": "admin scope1",
-            "token": encode_tg_token(stub_tg_auth[0].tg_user_id)
+            "scope": "scope1 scope2",
+            "token": encode_tg_token(stub_disabled_tg_auth[0].tg_user_id)
         }
     )
 

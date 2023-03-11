@@ -52,6 +52,14 @@ def stub_user() -> User:
 
 
 @pytest.fixture()
+def stub_disabled_user() -> User:
+    user = get_stub_user()
+    user.is_disabled = True
+    with ignore_db_readonly():
+        return create_model(user)
+
+
+@pytest.fixture()
 def oauth_config():
     set_config(oauth={
         "access_token_expire": 1,

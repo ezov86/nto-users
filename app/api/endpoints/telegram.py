@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from app.api.auth import get_authorized_user
 from app.api.schemas import username_constr, UserSchema, AuthTokensSchema
 from app.core.auth import AuthenticationService
-from app.core.security import UserIsNotPermittedError
+from app.core.register import UserAlreadyExistsError, RegistrationService
+from app.core.repos import ModelNotUniqueError
+from app.core.security import UserIsNotPermittedError, AuthorizedUser
 from app.core.strategies import TelegramAuthStrategy, InvalidAuthDataError, TelegramLoginCredentials, \
     TelegramAddStrategyData
-from app.core.register import UserAlreadyExistsError, RegistrationService
 
 tg_router = APIRouter(
     tags=["telegram"]
@@ -71,9 +73,8 @@ def tg_login(
         auth_service: AuthenticationService = Depends(),
         auth_strategy: TelegramAuthStrategy = Depends()
 ) -> AuthTokensSchema:
-    auth_service.set_strategy(auth_strategy)
     try:
-        tokens = auth_service.login_for_tokens(TelegramLoginCredentials(
+        tokens = auth_service.login_for_tokens(auth_strategy, TelegramLoginCredentials(
             token=body.token,
             scopes=body.scope.split()
         ))
@@ -86,3 +87,31 @@ def tg_login(
         access=tokens.access,
         refresh=tokens.refresh
     )
+
+
+class TelegramAddStrategySchema(BaseModel):
+    token: str
+
+
+@tg_router.post(
+    path="/tg/add",
+    status_code=204,
+    description="Add Telegram authentication to user's account. Requires users:tg:add scope",
+    responses={
+        400: {"description": "Invalid auth data. Or Telegram user is already attached"}
+    }
+)
+def tg_add_to_user(
+        body: TelegramAddStrategySchema,
+        auth_user: AuthorizedUser = Depends(get_authorized_user(["users:tg:add"])),
+        auth_strategy: TelegramAuthStrategy = Depends()
+):
+    try:
+        auth_strategy.add_to_user(auth_user.user, TelegramAddStrategyData(
+            name=auth_user.name,
+            token=body.token
+        ))
+    except InvalidAuthDataError as e:
+        raise HTTPException(400, str(e))
+    except ModelNotUniqueError:
+        raise HTTPException(400, "Telegram user already attached")

@@ -1,11 +1,14 @@
 import random
 import string
+from copy import copy
 from datetime import datetime, timedelta
 
 from dateutil.parser import parse
+from sqlalchemy.orm import Session
 
 from app.core.models import User, TelegramAuthEntry
 from .db import get_session
+from ..core.crypto import encode_jwt
 
 
 def datetime_soft_assert(result: datetime, expected: datetime):
@@ -41,16 +44,16 @@ def assert_user_dict(result: dict, expected: dict):
 def assert_user_model(result: User, expected: User):
     datetime_soft_assert(result.registered_at, expected.registered_at)
     _assert_model_dict(
-        result.__dict__,
-        expected.__dict__,
+        copy(result.__dict__),
+        copy(expected.__dict__),
         ["registered_at"]
     )
 
 
 def assert_tg_auth_entry(result: TelegramAuthEntry, expected: TelegramAuthEntry):
     _assert_model_dict(
-        result.__dict__,
-        expected.__dict__,
+        copy(result.__dict__),
+        copy(expected.__dict__),
         ["user"]
     )
 
@@ -80,18 +83,49 @@ def rand_str() -> str:
     ))
 
 
-def get_stub_user() -> User:
+def get_stub_user(name: str = None, is_disabled: bool = False, scopes: list[str] = None) -> User:
+    if name is None:
+        name = rand_str()
+
+    if scopes is None:
+        scopes = ["scope1", "scope2"]
+
     return User(
-        name=rand_str(),
-        is_disabled=False,
-        scopes=["scope1", "scope2"],
+        name=name,
+        is_disabled=is_disabled,
+        scopes=scopes,
         registered_at=datetime.utcnow()
     )
 
 
-def create_model(model) -> any:
+def with_session(func, *args, **kwargs) -> any:
     session = next(get_session())
+    return func(session, *args, **kwargs)
+
+
+def create_model(session: Session, model) -> any:
     session.add(model)
     session.commit()
     session.refresh(model)
     return model
+
+
+def update_model(session: Session, model) -> any:
+    session.commit()
+    session.refresh(model)
+    return model
+
+
+def get_by_id(session, model_type, id_: int) -> any:
+    return session.get(model_type, id_)
+
+
+def encode_access_token(username: str, scopes: str) -> str:
+    return encode_jwt(username, "access_token_secret", 1, extra_payload={"scopes": scopes})
+
+
+def update_scopes(session: Session, user: User, scopes: list[str]):
+    user_from_db = get_by_id(session, User, user.id)
+    user_from_db.scopes = scopes
+    update_model(session, user_from_db)
+    return user_from_db

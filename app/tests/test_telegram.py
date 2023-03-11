@@ -4,13 +4,13 @@ import pytest
 from starlette.testclient import TestClient
 
 from .config import set_config
-from .utils import assert_all_users, assert_all_tg_auth_entries, assert_user_dict, create_model, rand_str
+from .db import ignore_db_readonly
+from .utils import assert_all_users, assert_all_tg_auth_entries, assert_user_dict, create_model, rand_str, \
+    encode_access_token, \
+    update_scopes, with_session, get_stub_user
 
 from app.core.crypto import encode_jwt
 from app.core.models import User, TelegramAuthEntry
-
-TG_SECRET = "tg_secret"
-TG_SCOPES = ["scope1", "scope2"]
 
 
 @pytest.fixture(scope="module")
@@ -22,21 +22,21 @@ def rand_tg_user_id() -> str:
 def tg_config():
     set_config(
         telegram={
-            "token_secret": TG_SECRET,
+            "token_secret": "telegram_token_secret",
         },
         user_default={
-            "scopes": TG_SCOPES
+            "scopes": ["scope1", "scope2"]
         }
     )
 
 
 def encode_tg_token(tg_user_id: str) -> str:
-    return encode_jwt(tg_user_id, TG_SECRET)
+    return encode_jwt(tg_user_id, "telegram_token_secret")
 
 
 @pytest.fixture(scope="module")
 def tg_token(rand_tg_user_id: str) -> str:
-    return encode_jwt(rand_tg_user_id, TG_SECRET)
+    return encode_jwt(rand_tg_user_id, "telegram_token_secret")
 
 
 @pytest.fixture()
@@ -44,7 +44,7 @@ def stub_tg_auth(
         rand_tg_user_id: str,
         stub_user: User
 ) -> tuple[TelegramAuthEntry, User]:
-    tg_auth_entry = create_model(TelegramAuthEntry(
+    tg_auth_entry = with_session(create_model, TelegramAuthEntry(
         tg_user_id=rand_tg_user_id,
         user_id=stub_user.id
     ))
@@ -56,7 +56,7 @@ def stub_disabled_tg_auth(
         rand_tg_user_id: str,
         stub_disabled_user: User
 ) -> tuple[TelegramAuthEntry, User]:
-    tg_auth_entry = create_model(TelegramAuthEntry(
+    tg_auth_entry = with_session(create_model, TelegramAuthEntry(
         tg_user_id=rand_tg_user_id,
         user_id=stub_disabled_user.id
     ))
@@ -66,9 +66,10 @@ def stub_disabled_tg_auth(
 def test_tg_register(
         client: TestClient,
         tg_token: str,
-        rand_username: str,
         rand_tg_user_id: str
 ):
+    rand_username = rand_str()
+
     resp = client.post(
         url="/tg/register",
         json={
@@ -80,7 +81,7 @@ def test_tg_register(
     assert_user_dict(resp.json(), {
         "name": rand_username,
         "is_disabled": False,
-        "scopes": TG_SCOPES,
+        "scopes": ["scope1", "scope2"],
         "registered_at": str(datetime.utcnow())
     })
 
@@ -89,7 +90,7 @@ def test_tg_register(
     assert_all_users([User(
         name=rand_username,
         is_disabled=False,
-        scopes=TG_SCOPES,
+        scopes=["scope1", "scope2"],
         registered_at=datetime.utcnow()
     )])
 
@@ -141,13 +142,12 @@ def test_tg_register_existing_tg_user(
         client: TestClient,
         stub_tg_auth: tuple[TelegramAuthEntry, User],
         tg_token: str,
-        rand_username: str,
         read_only
 ):
     resp = client.post(
         url="/tg/register",
         json={
-            "name": rand_username,
+            "name": stub_tg_auth[1].name,
             "token": tg_token
         }
     )
@@ -233,4 +233,107 @@ def test_tg_login_disabled_user(
     assert resp.status_code == 403
     assert resp.json() == {
         "detail": "User is not permitted"
+    }
+
+
+def test_tg_add_to_user(
+        client: TestClient,
+        stub_user: User,
+        rand_tg_user_id: str,
+        tg_token: str,
+        oauth_config
+):
+    access_token = encode_access_token(stub_user.name, "users:tg:add")
+    stub_user = with_session(update_scopes, stub_user, ["users:tg:add"])
+
+    resp = client.post(
+        url="/tg/add",
+        headers=[("Authorization", "Bearer " + access_token)],
+        json={
+            "token": tg_token
+        }
+    )
+
+    assert resp.status_code == 204
+
+    assert_all_users([stub_user])
+
+    assert_all_tg_auth_entries([TelegramAuthEntry(
+        tg_user_id=rand_tg_user_id,
+        user_id=stub_user.id
+    )])
+
+
+def test_tg_add_to_user_with_invalid_scopes(
+        client: TestClient,
+        stub_user: User,
+        tg_token: str,
+        oauth_config,
+        read_only
+):
+    access_token = encode_access_token(stub_user.name, "")
+
+    resp = client.post(
+        url="/tg/add",
+        headers=[("Authorization", "Bearer " + access_token)],
+        json={
+            "token": tg_token
+        }
+    )
+
+    assert resp.status_code == 403
+    assert resp.json() == {
+        "detail": "User is not permitted"
+    }
+
+
+def test_tg_add_already_attached(
+        client: TestClient,
+        stub_tg_auth: tuple[TelegramAuthEntry, User],
+        tg_token: str,
+        oauth_config,
+        read_only
+):
+    access_token = encode_access_token(stub_tg_auth[1].name, "users:tg:add")
+    with ignore_db_readonly():
+        with_session(update_scopes, stub_tg_auth[1], ["users:tg:add"])
+
+    resp = client.post(
+        url="/tg/add",
+        headers=[("Authorization", "Bearer " + access_token)],
+        json={
+            "token": tg_token
+        }
+    )
+
+    assert resp.status_code == 400
+    assert resp.json() == {
+        "detail": "Telegram user already attached"
+    }
+
+
+def test_tg_add_already_attached_to_another_user(
+        client: TestClient,
+        stub_tg_auth: tuple[TelegramAuthEntry, User],
+        tg_token: str,
+        oauth_config,
+        read_only
+):
+    # Create another stub user without Telegram auth.
+    with ignore_db_readonly():
+        stub_user2 = with_session(create_model, get_stub_user(scopes=["users:tg:add"]))
+
+    access_token = encode_access_token(stub_user2.name, "users:tg:add")
+
+    resp = client.post(
+        url="/tg/add",
+        headers=[("Authorization", "Bearer " + access_token)],
+        json={
+            "token": tg_token
+        }
+    )
+
+    assert resp.status_code == 400
+    assert resp.json() == {
+        "detail": "Telegram user already attached"
     }

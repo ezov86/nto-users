@@ -24,7 +24,7 @@ engine = create_engine(
 
 Base.metadata.create_all(bind=engine)
 
-session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+session_local = sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
 
 
 @event.listens_for(session_local, "after_flush")

@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from fastapi import Depends
 
 from app.config import get_config, Config
@@ -9,11 +11,13 @@ from app.core.security import UserIsNotPermittedError
 from .base import AuthStrategy, LoginCredentials, AddStrategyData, InvalidAuthDataError
 
 
+@dataclass(frozen=True, kw_only=True)
 class TelegramAddStrategyData(AddStrategyData):
     # 'name' inherited.
     token: str
 
 
+@dataclass(frozen=True, kw_only=True)
 class TelegramLoginCredentials(LoginCredentials):
     # 'scopes' inherited.
     token: str
@@ -23,6 +27,7 @@ class TelegramAuthStrategy(AuthStrategy[TelegramLoginCredentials, TelegramAddStr
     """
     Authentication via telegram requires only valid Telegram JWT generated on the service side.
     """
+
     def __init__(
             self,
             tg_auth_repo: TelegramAuthRepo = Depends(),

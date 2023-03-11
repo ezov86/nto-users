@@ -1,7 +1,6 @@
 from abc import abstractmethod
+from dataclasses import dataclass
 from typing import TypeVar, Generic
-
-from pydantic import BaseModel
 
 from app.core.models import User
 
@@ -16,11 +15,13 @@ class StrategyAlreadyAttachedError(Exception):
         super().__init__(msg)
 
 
-class AddStrategyData(BaseModel):
+@dataclass(frozen=True, kw_only=True)
+class AddStrategyData:
     name: str
 
 
-class LoginCredentials(BaseModel):
+@dataclass(frozen=True, kw_only=True)
+class LoginCredentials:
     scopes: list[str]
 
 

@@ -1,18 +1,12 @@
 from datetime import datetime
 
 from fastapi import Depends
-from pydantic import BaseModel
 
 from app.config import Config, get_config
 from app.core.models import User
 from app.core.repos import UserRepo, ModelNotUniqueError
 from app.core.strategies import AuthStrategy
 from app.core.strategies import AddStrategyDataType
-
-
-class UserRegisterSchema(BaseModel):
-    name: str
-    scopes: list[str]
 
 
 class UserAlreadyExistsError(Exception):

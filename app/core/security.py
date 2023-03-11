@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from dataclasses import dataclass
+
+from app.core.models import User
 
 
 class UserIsNotPermittedError(Exception):
@@ -6,9 +8,11 @@ class UserIsNotPermittedError(Exception):
         super().__init__(msg)
 
 
-class AuthenticatedUser(BaseModel):
+@dataclass(frozen=True, kw_only=True)
+class AuthenticatedUser:
     name: str
     scopes: list[str]
+    user: User
 
     def is_admin(self) -> bool:
         return "admin" in self.scopes
@@ -22,3 +26,7 @@ class AuthenticatedUser(BaseModel):
                 return False
 
         return True
+
+    def authorize(self, scopes: list[str]):
+        if self.is_permitted(scopes):
+            raise UserIsNotPermittedError()

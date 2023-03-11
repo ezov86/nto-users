@@ -15,4 +15,4 @@ down:
 	docker compose down
 
 test:
-	docker exec $(CONTAINER) sh -c "cd app; coverage run -m pytest tests/api; coverage report"
+	docker exec $(CONTAINER) sh -c "cd app; coverage run -m pytest tests/; coverage report"

@@ -4,12 +4,8 @@ Security helpers for authentication/authorization process.
 
 from dataclasses import dataclass
 
+from app.core import exc
 from app.core.models import User
-
-
-class UserIsNotPermittedError(Exception):
-    def __init__(self, msg="User is not permitted"):
-        super().__init__(msg)
 
 
 def get_valid_scopes(requested_scopes: list[str], user: User) -> list[str]:
@@ -39,19 +35,30 @@ def get_valid_scopes(requested_scopes: list[str], user: User) -> list[str]:
     return available_from_requested
 
 
-def are_scopes_valid(scopes: list[str], user: User) -> bool:
+def check_scopes_valid(scopes: list[str], user: User):
     """
-    Only checks that requested scopes are valid for given user.
+    Checks that requested scopes are valid for given user.
+
+    :raises AccessDeniedError
     """
 
     if "admin" in user.scopes:
-        return True
+        return
 
     for scope in scopes:
         if scope not in user.scopes:
-            return False
+            raise exc.AccessDenied(f"requested scope {scope}")
 
-    return True
+
+def check_user_not_disabled(user: User):
+    """
+    Check that user is not disabled.
+
+    :raises AccessDenied: user is disabled.
+    """
+
+    if user.is_disabled:
+        raise exc.AccessDenied("disabled user")
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -75,7 +82,7 @@ class AuthenticatedUser:
 
     def authorize(self, scopes: list[str]):
         if self.is_permitted(scopes):
-            raise UserIsNotPermittedError()
+            raise exc.AccessDenied(f"action that requires scopes {', '.join(scopes)}")
 
 
 @dataclass(frozen=True, kw_only=True)

@@ -3,8 +3,8 @@ from pydantic import BaseModel
 
 from app.api.auth import get_authenticated_user
 from app.api.schemas import AuthTokensSchema
-from app.core.auth import AuthenticationService
-from app.core.crypto import InvalidJWTError
+from app.core import exc
+from app.core.auth_tokens import AuthTokensService
 from app.core.security import AuthenticatedUser
 
 tokens_router = APIRouter(
@@ -17,17 +17,20 @@ tokens_router = APIRouter(
     status_code=200,
     description="Return new access and refresh token",
     responses={
-        400: {"description": "Invalid token"}
+        400: {"description": "Invalid token"},
+        403: {"description": "Access denied"}
     }
 )
-def refresh_tokens(
+async def refresh_tokens(
         refresh_token: str = Header(),
-        auth_service: AuthenticationService = Depends()
+        auth_service: AuthTokensService = Depends()
 ) -> AuthTokensSchema:
     try:
-        tokens = auth_service.refresh_tokens(refresh_token)
-    except InvalidJWTError as e:
+        tokens = await auth_service.refresh_tokens(refresh_token)
+    except exc.InvalidAuthData as e:
         raise HTTPException(400, str(e))
+    except exc.AccessDenied as e:
+        raise HTTPException(403, str(e))
 
     return AuthTokensSchema(
         access=tokens.access,
@@ -45,10 +48,10 @@ class AuthenticatedUserSchema(BaseModel):
     status_code=200,
     description="Return authenticated user data",
     responses={
-        400: {"description": "Invalid token"}
+        400: {"description": "Invalid token"},
     }
 )
-def get_user_from_tokens(
+async def get_user_from_tokens(
         auth_user: AuthenticatedUser = Depends(get_authenticated_user)
 ) -> AuthenticatedUserSchema:
     return AuthenticatedUserSchema(

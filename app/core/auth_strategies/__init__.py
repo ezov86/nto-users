@@ -1,17 +1,16 @@
 from .base import (
-    InvalidAuthDataError,
-    StrategyAlreadyAttachedError,
+    AuthMethodDataType,
     LoginCredentialsType,
-    AddStrategyDataType,
+    AddAuthMethodDataType,
     AuthStrategy
 )
 from .telegram import (
-    TelegramAddStrategyData,
+    TelegramAddAuthMethodData,
     TelegramLoginCredentials,
     TelegramAuthStrategy
 )
 from .email import (
     EmailAuthStrategy,
-    EmailAddStrategyData,
+    EmailAddAuthMethodData,
     EmailLoginCredentials
 )

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from dateutil.parser import parse
 from sqlalchemy.orm import Session
 
-from app.core.models import User, TelegramAuthEntry
+from app.core.models import User, TelegramAuthData
 from .db import get_session
 from ..core.crypto import encode_jwt
 
@@ -50,7 +50,7 @@ def assert_user_model(result: User, expected: User):
     )
 
 
-def assert_tg_auth_entry(result: TelegramAuthEntry, expected: TelegramAuthEntry):
+def assert_tg_auth_entry(result: TelegramAuthData, expected: TelegramAuthData):
     _assert_model_dict(
         copy(result.__dict__),
         copy(expected.__dict__),
@@ -72,8 +72,8 @@ def assert_all_users(expected: list[User]):
     _assert_all_models(User, assert_user_model, expected)
 
 
-def assert_all_tg_auth_entries(expected: list[TelegramAuthEntry]):
-    _assert_all_models(TelegramAuthEntry, assert_tg_auth_entry, expected)
+def assert_all_tg_auth_entries(expected: list[TelegramAuthData]):
+    _assert_all_models(TelegramAuthData, assert_tg_auth_entry, expected)
 
 
 def rand_str() -> str:

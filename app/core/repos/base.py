@@ -1,57 +1,59 @@
+from app.core import exc
 from typing import TypeVar, Generic, Type
 
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import models
-
-
-class ModelNotFoundError(Exception):
-    def __init__(self, msg="Model not found"):
-        super().__init__(msg)
-
-
-class ModelNotUniqueError(Exception):
-    def __init__(self, msg="Model is not unique"):
-        super().__init__(msg)
-
 
 ModelType = TypeVar("ModelType", bound=models.Base)
 
 
 class BaseRepo(Generic[ModelType]):
-    def __init__(self, session: Session, model: Type[ModelType]):
+    def __init__(self, session: AsyncSession, model: Type[ModelType]):
         self.session = session
         self.model = model
 
-    def get_by_id(self, id_: int) -> ModelType | None:
-        # noinspection PyTypeChecker
-        return self.session.query(self.model).where(
-            self.model.id == id_
-        ).first()
+    async def get_by_id(self, id_: int) -> ModelType | None:
+        return await self.session.get(self.model, id_)
 
-    def get_many(self, offset: int, limit: int) -> list[ModelType]:
+    async def get_many(self, offset: int, limit: int) -> list[ModelType]:
+        result = await self.session.execute(
+            select(self.model).offset(offset).limit(limit)
+        )
         # noinspection PyTypeChecker
-        return self.session.query(self.model).offset(offset).limit(limit).all()
+        return result.all()
 
-    def create(self, obj: ModelType) -> ModelType:
+    async def create(self, obj: ModelType, attribute_names: list[str] = None) -> ModelType:
         """
-        :raises NotUniqueError: given model is not unique (if it should be).
+        :raises AlreadyExists: given model is not unique (if it should be).
         """
+
+        if attribute_names is None:
+            attribute_names = []
+
         try:
             self.session.add(obj)
-            self.session.commit()
-            self.session.refresh(obj)
+            await self.session.commit()
+            await self.session.refresh(obj, attribute_names)
         except IntegrityError:
-            raise ModelNotUniqueError()
+            raise exc.AlreadyExists(self.model.__name__)
 
         return obj
 
-    def update(self, obj: ModelType) -> ModelType:
-        self.session.commit()
-        self.session.refresh(obj)
+    async def update(self, obj: ModelType) -> ModelType:
+        """
+        :raises AlreadyExists: model with updated unique data already exists.
+        """
+        try:
+            await self.session.commit()
+            await self.session.refresh(obj)
+        except IntegrityError:
+            raise exc.AlreadyExists(self.model.__name__)
+
         return obj
 
-    def delete(self, obj: ModelType):
-        self.session.delete(obj)
-        self.session.commit()
+    async def delete(self, obj: ModelType):
+        await self.session.delete(obj)
+        await self.session.commit()

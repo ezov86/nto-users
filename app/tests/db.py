@@ -6,22 +6,25 @@ from sqlalchemy.orm import sessionmaker
 from starlette.testclient import TestClient
 
 import app.db
-from app.core.models import Base, User, TelegramAuthEntry
+from app.core.models import Base, User, TelegramAuthData
 
 # In-memory DB not working for some reason.
 # _DB_URL = "sqlite+pysqlite:///:memory:"
 DB_PATH = "/test.db"
-DB_URL = "sqlite:///" + DB_PATH
+# DB_URL = "sqlite:///" + DB_PATH
+
+DB_URL = "postgresql://user:password@nto-postgres:5432/users"
 
 readonly = False
 
 engine = create_engine(
     DB_URL,
-    connect_args={"check_same_thread": False},
+    # connect_args={"check_same_thread": False},
     echo=False,
     future=True,
 )
 
+Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 
 session_local = sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
@@ -50,7 +53,8 @@ def override_db(client: TestClient):
 
 
 def finalize_overriden_db():
-    os.remove(DB_PATH)
+    # os.remove(DB_PATH)
+    pass
 
 
 def db_set_readonly_mode(readonly_: bool):
@@ -80,6 +84,6 @@ def ignore_db_readonly():
 
 def truncate_tables():
     session = next(get_session())
+    session.query(TelegramAuthData).delete()
     session.query(User).delete()
-    session.query(TelegramAuthEntry).delete()
     session.commit()

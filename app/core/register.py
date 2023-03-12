@@ -4,14 +4,9 @@ from fastapi import Depends
 
 from app.config import Config, get_config
 from app.core.models import User
-from app.core.repos import UserRepo, ModelNotUniqueError
-from app.core.strategies import AuthStrategy
-from app.core.strategies import AddStrategyDataType
-
-
-class UserAlreadyExistsError(Exception):
-    def __init__(self, msg="User already exists"):
-        super().__init__(msg)
+from app.core.repos import UserRepo
+from app.core.auth_strategies import AuthStrategy
+from app.core.auth_strategies import AddAuthMethodDataType
 
 
 class RegistrationService:
@@ -19,15 +14,11 @@ class RegistrationService:
     Registers new user.
     """
 
-    def __init__(
-            self,
-            user_repo: UserRepo = Depends(),
-            config: Config = Depends(get_config)
-    ):
-        self.user_repo = user_repo
+    def __init__(self, config: Config = Depends(get_config), user_repo: UserRepo = Depends()):
         self.config = config
+        self.user_repo = user_repo
 
-    def register(self, strategy: AuthStrategy, auth_data: AddStrategyDataType) -> User:
+    async def register(self, strategy: AuthStrategy, auth_data: AddAuthMethodDataType) -> User:
         """
         Register user using given auth strategy.
         Auth data will be attached to created user.
@@ -35,8 +26,8 @@ class RegistrationService:
         :param strategy: auth strategy.
         :param auth_data: data for auth strategy.
 
-        :raises UserAlreadyExistsError: user with given name already exists.
-        :raises InvalidAuthDataError: invalid auth data.
+        :raises AlreadyExists: user with given name already exists.
+        :raises InvalidAuthData: invalid auth data.
 
         :return: created user.
         """
@@ -48,11 +39,8 @@ class RegistrationService:
             registered_at=datetime.utcnow()
         )
 
-        try:
-            # Will also add to DB user in one commit.
-            # Raises InvalidAuthDataError.
-            strategy.add_to_user(user_for_db, auth_data)
-        except ModelNotUniqueError:
-            raise UserAlreadyExistsError()
+        # Raises InvalidAuthData.
+        strategy.add_auth_method_to_user(user_for_db, auth_data)
 
-        return self.user_repo.create(user_for_db)
+        # Raises AlreadyExists.
+        return await self.user_repo.create(user_for_db)

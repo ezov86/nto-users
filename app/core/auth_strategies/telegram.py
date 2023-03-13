@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from fastapi import Depends
+from pydantic import BaseModel, ValidationError
 
 from app.config import get_config, Config
 from app.core import exc
@@ -20,8 +21,7 @@ class TelegramLoginCredentials(LoginCredentials):
     token: str
 
 
-@dataclass(frozen=True, kw_only=True)
-class TelegramTokenData:
+class TelegramTokenDataSchema(BaseModel):
     tg_user_id: str
     tg_username: str
     tg_first_name: str
@@ -41,7 +41,7 @@ class TelegramAuthStrategy(AuthStrategy[TelegramLoginCredentials, TelegramAddAcc
         self.tg_auth_repo = tg_auth_repo
         self.config = config
 
-    def _decode_tg_token(self, token: str) -> TelegramTokenData:
+    def _decode_tg_token(self, token: str) -> TelegramTokenDataSchema:
         try:
             payload = decode_jwt(token, [
                 "tg_username",
@@ -52,13 +52,14 @@ class TelegramAuthStrategy(AuthStrategy[TelegramLoginCredentials, TelegramAddAcc
         except exc.InvalidToken:
             raise exc.InvalidAuthData()
 
-        return TelegramTokenData(
-            tg_user_id=str(payload["sub"]),
-            tg_username=str(payload["tg_username"]),
-            tg_first_name=str(payload["tg_first_name"]),
-            tg_last_name=str(payload["tg_last_name"]),
-            tg_photo_url=str(payload["tg_photo_url"])
-        )
+        # Rename "sub" to "tg_user_id".
+        payload["tg_user_id"] = payload["sub"]
+        del payload["sub"]
+
+        try:
+            return TelegramTokenDataSchema(**payload)
+        except ValidationError:
+            raise exc.InvalidAuthData()
 
     def add_auth_account_to_user(self, user: User, data: TelegramAddAccountData) -> User:
         # Raises InvalidAuthData.

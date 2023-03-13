@@ -44,7 +44,7 @@ class EmailAuthStrategy(AuthStrategy[EmailLoginCredentials, EmailAddAccountData,
         self.user_repo = user_repo
         self.config = config
 
-    def add_auth_account_to_user(self, user: User, data: EmailAddAccountData):
+    def add_auth_account_to_user(self, user: User, data: EmailAddAccountData) -> User:
         if data.is_verified is None:
             is_verified = not self.config.email.should_verify
         else:
@@ -56,6 +56,8 @@ class EmailAuthStrategy(AuthStrategy[EmailLoginCredentials, EmailAddAccountData,
             password_hash=hash_password(data.password),
             password_updated_with_token=None
         )
+
+        return user
 
     async def _get_account(self, name_or_email: str | EmailStr) -> EmailAccount | None:
         if type(name_or_email) == str:

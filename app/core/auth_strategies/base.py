@@ -31,7 +31,7 @@ class AuthStrategy(Generic[LoginCredentialsType, AddAuthAccountDataType, AuthMet
     """
 
     @abstractmethod
-    def add_auth_account_to_user(self, user: User, data: AddAuthAccountDataType):
+    def add_auth_account_to_user(self, user: User, data: AddAuthAccountDataType) -> User:
         """
         Attaches new authentication account to given user model.
 
@@ -39,6 +39,8 @@ class AuthStrategy(Generic[LoginCredentialsType, AddAuthAccountDataType, AuthMet
         :param data: data.
 
         :raises InvalidAuthData: invalid data.
+
+        :returns: user with new attached account (same as object passed to 'user' param).
         """
 
     @abstractmethod

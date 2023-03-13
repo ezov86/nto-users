@@ -33,7 +33,7 @@ class RegistrationService:
         :return: created user.
         """
 
-        user_for_db = User(
+        user = User(
             name=username,
             is_disabled=False,
             scopes=self.config.user_default.scopes,
@@ -41,7 +41,7 @@ class RegistrationService:
         )
 
         # Raises InvalidAuthData.
-        strategy.add_auth_account_to_user(user_for_db, auth_data)
+        user = strategy.add_auth_account_to_user(user, auth_data)
 
         # Raises AlreadyExists.
-        return await self.user_repo.create(user_for_db)
+        return await self.user_repo.create(user)

@@ -12,7 +12,6 @@ from .base import AuthStrategy, LoginCredentials, AddAuthAccountData
 
 @dataclass(frozen=True, kw_only=True)
 class TelegramAddAccountData(AddAuthAccountData):
-    # 'name' inherited.
     token: str
 
 

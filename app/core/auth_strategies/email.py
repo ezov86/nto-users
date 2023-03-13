@@ -15,7 +15,6 @@ from .base import AddAuthAccountData, AuthStrategy, LoginCredentials
 
 @dataclass(frozen=True, kw_only=True)
 class EmailAddAccountData(AddAuthAccountData):
-    # 'name' inherited.
     email: str
     password: str
     is_verified: bool | None

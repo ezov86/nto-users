@@ -10,7 +10,6 @@ class AddAuthAccountData:
     """
     Data required for strategy to add new auth method.
     """
-    name: str
 
 
 @dataclass(frozen=True, kw_only=True)

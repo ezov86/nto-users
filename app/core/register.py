@@ -18,11 +18,12 @@ class RegistrationService:
         self.config = config
         self.user_repo = user_repo
 
-    async def register(self, strategy: AuthStrategy, auth_data: AddAuthAccountDataType) -> User:
+    async def register(self, username: str, strategy: AuthStrategy, auth_data: AddAuthAccountDataType) -> User:
         """
         Register user using given auth strategy.
         Auth data will be attached to created user.
 
+        :param username: name of the new user.
         :param strategy: auth strategy.
         :param auth_data: data for auth strategy.
 
@@ -33,7 +34,7 @@ class RegistrationService:
         """
 
         user_for_db = User(
-            name=auth_data.name,
+            name=username,
             is_disabled=False,
             scopes=self.config.user_default.scopes,
             registered_at=datetime.utcnow()

@@ -22,7 +22,7 @@ class MailSender:
 
         self.server.sendmail(self.env.SMTP_FROM, email, msg.as_string())
 
-    def send_password_change_mail(self, email: str, token: str):
+    def send_password_update_mail(self, email: str, token: str):
         msg = MIMEMultipart()
         msg["From"] = self.env.SMTP_FROM
         msg["To"] = email

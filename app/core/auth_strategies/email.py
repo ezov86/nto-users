@@ -8,7 +8,7 @@ from app.core.models import User
 from app.core.models.email import EmailAccount
 from app.core import exc
 from app.core.crypto import hash_password, verify_password
-from app.core.repos import EmailAccountsRepo, UserRepo
+from app.core.repos import EmailAccountRepo, UserRepo
 from app.config import Config, get_config
 from .base import AddAuthMethodData, AuthStrategy, LoginCredentials
 
@@ -37,7 +37,7 @@ class EmailAuthStrategy(AuthStrategy[EmailLoginCredentials, EmailAddAccountData,
     """
 
     def __init__(self,
-                 email_repo: EmailAccountsRepo = Depends(),
+                 email_repo: EmailAccountRepo = Depends(),
                  user_repo: UserRepo = Depends(),
                  config: Config = Depends(get_config)
                  ):

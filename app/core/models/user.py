@@ -2,7 +2,8 @@ from datetime import datetime
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.models import TelegramAuthData
+from .telegram import TelegramAuthData
+from .email import EmailAccount
 from app.core.models.base import Base
 from app.core.models.types import ScopesArrayType
 
@@ -17,5 +18,5 @@ class User(Base):
     scopes: Mapped[list[str]] = mapped_column(ScopesArrayType, nullable=False, default=[])
     registered_at: Mapped[datetime] = mapped_column(nullable=False)
 
-    telegram_auth: Mapped["TelegramAuthData"] = relationship(back_populates="user", lazy="joined")
-    email_auth: Mapped["EmailAuthData"] = relationship(back_populates="user", lazy="joined")
+    telegram_auth: Mapped[TelegramAuthData] = relationship(back_populates="user", lazy="joined")
+    email_auth: Mapped[EmailAccount] = relationship(back_populates="user", lazy="joined")

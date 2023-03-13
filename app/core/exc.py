@@ -41,3 +41,12 @@ class NotFound(Exception):
 
     def __init__(self, resource: str):
         super().__init__(f"{resource} not found")
+
+
+class AlreadyDoneNonIdempotentAction(Exception):
+    """
+    Same non-idempotent action was already performed.
+    """
+
+    def __init__(self, action: str):
+        super().__init__(f"{action} is already done")

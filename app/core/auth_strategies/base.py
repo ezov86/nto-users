@@ -51,9 +51,3 @@ class AuthStrategy(Generic[LoginCredentialsType, AddAuthMethodDataType, AuthMeth
         :raises InvalidAuthData: credentials are invalid.
         :raises AccessDenied: user is not permitted to authorize.
         """
-
-    @abstractmethod
-    async def get_auth_method_data(self, user: User) -> AuthMethodDataType | None:
-        """
-        Returns auth data used by strategy that is attached to given user or None.
-        """

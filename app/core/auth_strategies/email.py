@@ -80,6 +80,3 @@ class EmailAuthStrategy(AuthStrategy[EmailLoginCredentials, EmailAddAccountData,
             raise exc.InvalidAuthData()
 
         return account.user
-
-    async def get_auth_method_data(self, user: User) -> EmailAccount | None:
-        return user.email_auth

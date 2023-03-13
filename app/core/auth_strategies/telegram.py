@@ -84,6 +84,3 @@ class TelegramAuthStrategy(AuthStrategy[TelegramLoginCredentials, TelegramAddAut
         await self.tg_auth_repo.update(auth_data_model)
 
         return auth_data_model.user
-
-    async def get_auth_method_data(self, user: User) -> TelegramAuthData | None:
-        return user.telegram_auth

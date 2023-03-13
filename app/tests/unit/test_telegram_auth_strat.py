@@ -1,13 +1,12 @@
 from copy import copy
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import patch, Mock
-import unittest.mock
 
 from app.core.auth_strategies import TelegramAuthStrategy, TelegramAddAccountData
 from app.core.models import TelegramAccount
+from app.core import exc
 from .mocks import get_mock_config
 from ..utils import rand_str, rand_str_or_none, rand_user, assert_user_eq, assert_tg_account_eq
-from ...core import exc
 
 
 class TestTelegramAuthStrategy(IsolatedAsyncioTestCase):

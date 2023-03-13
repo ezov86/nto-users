@@ -18,5 +18,5 @@ class User(Base):
     scopes: Mapped[list[str]] = mapped_column(ScopesArrayType, nullable=False, default=[])
     registered_at: Mapped[datetime] = mapped_column(nullable=False)
 
-    telegram_account: Mapped[TelegramAccount] = relationship(back_populates="user", lazy="joined")
-    email_account: Mapped[EmailAccount] = relationship(back_populates="user", lazy="joined")
+    telegram_account: Mapped[TelegramAccount] = relationship(back_populates="user", lazy="joined", uselist=False)
+    email_account: Mapped[EmailAccount] = relationship(back_populates="user", lazy="joined", uselist=False)

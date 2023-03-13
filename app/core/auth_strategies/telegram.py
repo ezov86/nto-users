@@ -18,15 +18,14 @@ class TelegramAddAuthMethodData(AddAuthMethodData):
 
 @dataclass(frozen=True, kw_only=True)
 class TelegramLoginCredentials(LoginCredentials):
-    # 'scopes' inherited.
     token: str
 
 
 @dataclass(frozen=True, kw_only=True)
-class TelegramToken:
+class TelegramTokenData:
     tg_user_id: str
     tg_username: str
-    tg_first_name: str | None
+    tg_first_name: str
     tg_last_name: str | None
     tg_photo_url: str | None
 
@@ -43,7 +42,7 @@ class TelegramAuthStrategy(AuthStrategy[TelegramLoginCredentials, TelegramAddAut
         self.tg_auth_repo = tg_auth_repo
         self.config = config
 
-    def _decode_tg_token(self, token: str) -> TelegramToken:
+    def _decode_tg_token(self, token: str) -> TelegramTokenData:
         try:
             payload = decode_jwt(token, [
                 "tg_username",
@@ -54,7 +53,7 @@ class TelegramAuthStrategy(AuthStrategy[TelegramLoginCredentials, TelegramAddAut
         except exc.InvalidToken:
             raise exc.InvalidAuthData()
 
-        return TelegramToken(
+        return TelegramTokenData(
             tg_user_id=str(payload["sub"]),
             tg_username=str(payload["tg_username"]),
             tg_first_name=str(payload["tg_first_name"]),
@@ -64,29 +63,27 @@ class TelegramAuthStrategy(AuthStrategy[TelegramLoginCredentials, TelegramAddAut
 
     def add_auth_method_to_user(self, user: User, data: TelegramAddAuthMethodData):
         # Raises InvalidAuthData.
-        tg_token = self._decode_tg_token(data.token)
+        token_auth_data = self._decode_tg_token(data.token)
 
         user.telegram_auth = TelegramAuthData(
-            tg_user_id=tg_token.tg_user_id,
+            **token_auth_data.__dict__,
             user=user
         )
 
     async def login_for_user_model_or_fail(self, schema: TelegramLoginCredentials) -> User:
         # Raises InvalidAuthData.
-        tg_token = self._decode_tg_token(schema.token)
+        token_auth_data = self._decode_tg_token(schema.token)
 
-        # Find auth entry.
-        if (tg_auth_entry := await self.tg_auth_repo.get_by_tg_user_id(tg_token.tg_user_id)) is None:
+        # Find auth data in db.
+        auth_data_model = await self.tg_auth_repo.get_by_tg_user_id(token_auth_data.tg_user_id)
+        if auth_data_model is None:
             raise exc.InvalidAuthData()
 
-        # Update profile data.
-        tg_auth_entry.tg_username = tg_token.tg_username
-        tg_auth_entry.tg_first_name = tg_token.tg_first_name
-        tg_auth_entry.tg_last_name = tg_token.tg_last_name
-        tg_auth_entry.tg_photo_url = tg_token.tg_photo_url
-        await self.tg_auth_repo.update(tg_auth_entry)
+        # Token data is ok, update profile data.
+        auth_data_model.update_fields(**token_auth_data.__dict__)
+        await self.tg_auth_repo.update(auth_data_model)
 
-        return tg_auth_entry.user
+        return auth_data_model.user
 
     async def get_auth_method_data(self, user: User) -> TelegramAuthData | None:
         return user.telegram_auth

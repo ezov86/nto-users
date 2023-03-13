@@ -18,3 +18,4 @@ class User(Base):
     registered_at: Mapped[datetime] = mapped_column(nullable=False)
 
     telegram_auth: Mapped["TelegramAuthData"] = relationship(back_populates="user", lazy="joined")
+    email_auth: Mapped["EmailAuthData"] = relationship(back_populates="user", lazy="joined")

@@ -11,6 +11,6 @@ from .telegram import (
 )
 from .email import (
     EmailAuthStrategy,
-    EmailAddAuthMethodData,
+    EmailAddAccountData,
     EmailLoginCredentials
 )

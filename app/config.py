@@ -7,12 +7,14 @@ class Config:
         db_dev_url: str
 
     class _SQLAlchemy:
-        db_url: str
+        async_db_url: str
 
     class _UserDefault:
         scopes: list
 
     class _Email:
+        should_verify: True
+
         smtp_tls: bool
         smtp_host: str
         smtp_port: int
@@ -38,6 +40,10 @@ class Config:
     class _Telegram:
         token_secret: str
 
+    class _Tests:
+        sync_db_url: str
+        async_db_url: str
+
     def __init__(self):
         self.alembic = Config._Alembic()
         self.sqlalchemy = Config._SQLAlchemy()
@@ -45,6 +51,7 @@ class Config:
         self.email = Config._Email()
         self.oauth = Config._OAuth()
         self.telegram = Config._Telegram()
+        self.tests = Config._Tests()
 
     def load_from_ini(self):
         parser = ConfigParser()

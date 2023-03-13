@@ -1,21 +1,15 @@
+import random
 from datetime import datetime
 
 import pytest
 from starlette.testclient import TestClient
 
 from .config import set_config
-from .db import ignore_db_readonly
-from .utils import assert_all_users, assert_all_tg_auth_entries, assert_user_dict, create_model, rand_str, \
-    encode_access_token, \
-    update_scopes, with_session, get_stub_user
+from .utils import assert_all_users, create_model, rand_str, encode_access_token, update_scopes, with_session, \
+    get_stub_user, assert_user_json, assert_all_tg_auth_data
 
 from app.core.crypto import encode_jwt
 from app.core.models import User, TelegramAuthData
-
-
-@pytest.fixture(scope="module")
-def rand_tg_user_id() -> str:
-    return rand_str()
 
 
 @pytest.fixture(autouse=True)
@@ -30,8 +24,18 @@ def tg_config():
     )
 
 
-def encode_tg_token(tg_user_id: str) -> str:
-    return encode_jwt(tg_user_id, "telegram_token_secret")
+@pytest.fixture()
+def tg_profile_data() -> dict:
+    return {
+        "tg_username": rand_str(),
+        "tg_first_name": rand_str(),
+        "tg_last_name": random.choice([rand_str(), None]),
+        "tg_photo_url": random.choice([rand_str(), None])
+    }
+
+
+def encode_tg_token(tg_user_id: str, profile_data: dict) -> str:
+    return encode_jwt(tg_user_id, "telegram_token_secret", 10000, extra_payload=profile_data)
 
 
 @pytest.fixture(scope="module")
@@ -40,7 +44,7 @@ def tg_token(rand_tg_user_id: str) -> str:
 
 
 @pytest.fixture()
-def stub_tg_auth(
+def user_with_tg_auth(
         rand_tg_user_id: str,
         stub_user: User
 ) -> tuple[TelegramAuthData, User]:
@@ -52,7 +56,7 @@ def stub_tg_auth(
 
 
 @pytest.fixture()
-def stub_disabled_tg_auth(
+def disabled_user_with_tg_auth(
         rand_tg_user_id: str,
         stub_disabled_user: User
 ) -> tuple[TelegramAuthData, User]:
@@ -65,37 +69,39 @@ def stub_disabled_tg_auth(
 
 def test_tg_register(
         client: TestClient,
-        tg_token: str,
-        rand_tg_user_id: str
+        tg_profile_data: dict
 ):
-    rand_username = rand_str()
+    username = rand_str()
+    tg_user_id = rand_str()
+    tg_token = encode_tg_token(tg_user_id, tg_profile_data)
 
     resp = client.post(
         url="/tg/register",
         json={
-            "name": rand_username,
+            "name": username,
             "token": tg_token
         }
     )
 
-    assert_user_dict(resp.json(), {
-        "name": rand_username,
+    assert resp.status_code == 201
+
+    assert_user_json(resp.json(), {
+        "name": username,
         "is_disabled": False,
         "scopes": ["scope1", "scope2"],
         "registered_at": str(datetime.utcnow())
     })
 
-    assert resp.status_code == 201
-
     assert_all_users([User(
-        name=rand_username,
+        name=username,
         is_disabled=False,
         scopes=["scope1", "scope2"],
         registered_at=datetime.utcnow()
     )])
 
-    assert_all_tg_auth_entries([TelegramAuthData(
-        tg_user_id=rand_tg_user_id,
+    assert_all_tg_auth_data([TelegramAuthData(
+        tg_user_id=tg_user_id,
+        **tg_profile_data,
         user_id=resp.json()["id"]
     )])
 
@@ -121,14 +127,13 @@ def test_tg_register_with_invalid_token(
 def test_tg_register_existing_user(
         client: TestClient,
         stub_user: User,
-        tg_token,
         read_only
 ):
     resp = client.post(
         url="/tg/register",
         json={
             "name": stub_user.name,
-            "token": tg_token
+            "token": encode_tg_token(rand_str())
         }
     )
 
@@ -140,15 +145,15 @@ def test_tg_register_existing_user(
 
 def test_tg_register_existing_tg_user(
         client: TestClient,
-        stub_tg_auth: tuple[TelegramAuthData, User],
+        user_with_tg_auth: User,
         tg_token: str,
         read_only
 ):
     resp = client.post(
         url="/tg/register",
         json={
-            "name": stub_tg_auth[1].name,
-            "token": tg_token
+            "name": user_with_tg_auth.name,
+            "token": encode_tg_token(user_with_tg_auth.telegram_auth.tg_user_id)
         }
     )
 
@@ -160,14 +165,14 @@ def test_tg_register_existing_tg_user(
 
 def test_tg_login(
         client: TestClient,
-        stub_tg_auth: tuple[TelegramAuthData, User],
+        user_with_tg_auth: User,
         oauth_config
 ):
     resp = client.post(
         url="/tg/login",
         json={
             "scope": "scope1 scope2 admin",
-            "token": encode_tg_token(stub_tg_auth[0].tg_user_id)
+            "token": encode_tg_token(user_with_tg_auth.telegram_auth.tg_user_id)
         }
     )
 
@@ -183,7 +188,7 @@ def test_tg_login(
 
     assert resp.status_code == 200
     assert resp.json() == {
-        "name": stub_tg_auth[1].name,
+        "name": user_with_tg_auth.name,
         "scopes": ["scope1", "scope2"]
     }
 
@@ -198,7 +203,7 @@ def test_tg_login(
 
 def test_tg_login_with_invalid_token(
         client: TestClient,
-        stub_tg_auth: tuple[TelegramAuthData, User],
+        user_with_tg_auth: User,
         oauth_config,
         read_only
 ):
@@ -218,15 +223,16 @@ def test_tg_login_with_invalid_token(
 
 def test_tg_login_disabled_user(
         client: TestClient,
-        stub_disabled_tg_auth: tuple[TelegramAuthData, User],
+        disabled_user_with_tg_auth: User,
         oauth_config,
         read_only
 ):
+    tg_auth = disabled_user_with_tg_auth.telegram_auth
     resp = client.post(
         url="/tg/login",
         json={
             "scope": "scope1 scope2",
-            "token": encode_tg_token(stub_disabled_tg_auth[0].tg_user_id)
+            "token": encode_tg_token(tg_auth.tg_user_id)
         }
     )
 
@@ -258,7 +264,7 @@ def test_tg_add_to_user(
 
     assert_all_users([stub_user])
 
-    assert_all_tg_auth_entries([TelegramAuthData(
+    assert_all_tg_auth_data([TelegramAuthData(
         tg_user_id=rand_tg_user_id,
         user_id=stub_user.id
     )])
@@ -289,14 +295,13 @@ def test_tg_add_to_user_with_invalid_scopes(
 
 def test_tg_add_already_attached(
         client: TestClient,
-        stub_tg_auth: tuple[TelegramAuthData, User],
+        user_with_tg_auth,
         tg_token: str,
         oauth_config,
         read_only
 ):
-    access_token = encode_access_token(stub_tg_auth[1].name, "users:tg:add")
-    with ignore_db_readonly():
-        with_session(update_scopes, stub_tg_auth[1], ["users:tg:add"])
+    access_token = encode_access_token(user_with_tg_auth[1].name, "users:tg:add")
+    with_session(update_scopes, user_with_tg_auth[1], ["users:tg:add"])
 
     resp = client.post(
         url="/tg/add",
@@ -314,14 +319,13 @@ def test_tg_add_already_attached(
 
 def test_tg_add_already_attached_to_another_user(
         client: TestClient,
-        stub_tg_auth: tuple[TelegramAuthData, User],
+        user_with_tg_auth,
         tg_token: str,
         oauth_config,
         read_only
 ):
     # Create another stub user without Telegram auth.
-    with ignore_db_readonly():
-        stub_user2 = with_session(create_model, get_stub_user(scopes=["users:tg:add"]))
+    stub_user2 = with_session(create_model, get_stub_user(scopes=["users:tg:add"]))
 
     access_token = encode_access_token(stub_user2.name, "users:tg:add")
 

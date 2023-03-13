@@ -18,7 +18,6 @@ class LoginCredentials:
     """
     Data required for strategy to login.
     """
-    scopes: list[str]
 
 
 LoginCredentialsType = TypeVar("LoginCredentialsType", bound=LoginCredentials)

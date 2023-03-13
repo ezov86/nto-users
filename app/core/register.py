@@ -6,7 +6,7 @@ from app.config import Config, get_config
 from app.core.models import User
 from app.core.repos import UserRepo
 from app.core.auth_strategies import AuthStrategy
-from app.core.auth_strategies import AddAuthMethodDataType
+from app.core.auth_strategies import AddAuthAccountDataType
 
 
 class RegistrationService:
@@ -18,7 +18,7 @@ class RegistrationService:
         self.config = config
         self.user_repo = user_repo
 
-    async def register(self, strategy: AuthStrategy, auth_data: AddAuthMethodDataType) -> User:
+    async def register(self, strategy: AuthStrategy, auth_data: AddAuthAccountDataType) -> User:
         """
         Register user using given auth strategy.
         Auth data will be attached to created user.

@@ -13,7 +13,7 @@ class Config:
         scopes: list
 
     class _Email:
-        should_verify: True
+        should_verify: bool
 
         smtp_tls: bool
         smtp_host: str

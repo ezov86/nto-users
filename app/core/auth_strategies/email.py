@@ -10,11 +10,11 @@ from app.core import exc
 from app.core.crypto import hash_password, verify_password
 from app.core.repos import EmailAccountRepo, UserRepo
 from app.config import Config, get_config
-from .base import AddAuthMethodData, AuthStrategy, LoginCredentials
+from .base import AddAuthAccountData, AuthStrategy, LoginCredentials
 
 
 @dataclass(frozen=True, kw_only=True)
-class EmailAddAccountData(AddAuthMethodData):
+class EmailAddAccountData(AddAuthAccountData):
     # 'name' inherited.
     email: str
     password: str
@@ -75,6 +75,9 @@ class EmailAuthStrategy(AuthStrategy[EmailLoginCredentials, EmailAddAccountData,
         account = await self._get_account(credentials.name_or_email)
         if account is None:
             raise exc.InvalidAuthData()
+
+        if not account.is_verified:
+            raise exc.AccessDenied("user with unverified email account")
 
         if not verify_password(credentials.password, account.password_hash):
             raise exc.InvalidAuthData()

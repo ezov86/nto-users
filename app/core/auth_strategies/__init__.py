@@ -1,11 +1,11 @@
 from .base import (
     AuthMethodDataType,
     LoginCredentialsType,
-    AddAuthMethodDataType,
+    AddAuthAccountDataType,
     AuthStrategy
 )
 from .telegram import (
-    TelegramAddAuthMethodData,
+    TelegramAddAccountData,
     TelegramLoginCredentials,
     TelegramAuthStrategy
 )

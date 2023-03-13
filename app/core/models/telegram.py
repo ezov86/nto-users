@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from .base import Base
 
 
-class TelegramAuthData(Base):
+class TelegramAccount(Base):
     """
     Entry that stores data for user to authenticate via Telegram.
     """

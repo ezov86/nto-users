@@ -64,7 +64,7 @@ class TelegramAuthStrategy(AuthStrategy[TelegramLoginCredentials, TelegramAddAcc
         # Raises InvalidAuthData.
         token_account_date = self._decode_tg_token(data.token)
 
-        user.telegram_auth = TelegramAccount(
+        user.telegram_account = TelegramAccount(
             **token_account_date.__dict__,
             user=user
         )

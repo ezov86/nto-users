@@ -50,7 +50,7 @@ class EmailAuthStrategy(AuthStrategy[EmailLoginCredentials, EmailAddAccountData,
         else:
             is_verified = data.is_verified
 
-        user.email_auth = EmailAccount(
+        user.email_account = EmailAccount(
             email=data.email,
             is_verified=is_verified,
             password_hash=hash_password(data.password),
@@ -64,7 +64,7 @@ class EmailAuthStrategy(AuthStrategy[EmailLoginCredentials, EmailAddAccountData,
             if user is None:
                 return None  # No user found -> no account found.
 
-            return user.email_auth
+            return user.email_account
         elif type(name_or_email) == EmailStr:
             return await self.email_repo.get_by_email(name_or_email)
         else:

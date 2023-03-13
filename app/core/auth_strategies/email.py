@@ -45,7 +45,7 @@ class EmailAuthStrategy(AuthStrategy[EmailLoginCredentials, EmailAddAccountData,
         self.user_repo = user_repo
         self.config = config
 
-    def add_auth_method_to_user(self, user: User, data: EmailAddAccountData):
+    def add_auth_account_to_user(self, user: User, data: EmailAddAccountData):
         if data.is_verified is None:
             is_verified = not self.config.email.should_verify
         else:

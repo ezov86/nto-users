@@ -32,7 +32,7 @@ class AuthStrategy(Generic[LoginCredentialsType, AddAuthAccountDataType, AuthMet
     """
 
     @abstractmethod
-    def add_auth_method_to_user(self, user: User, data: AddAuthAccountDataType):
+    def add_auth_account_to_user(self, user: User, data: AddAuthAccountDataType):
         """
         Attaches new authentication account to given user model.
 

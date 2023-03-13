@@ -40,7 +40,7 @@ class RegistrationService:
         )
 
         # Raises InvalidAuthData.
-        strategy.add_auth_method_to_user(user_for_db, auth_data)
+        strategy.add_auth_account_to_user(user_for_db, auth_data)
 
         # Raises AlreadyExists.
         return await self.user_repo.create(user_for_db)

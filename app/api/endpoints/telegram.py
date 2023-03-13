@@ -106,7 +106,7 @@ async def tg_add_to_user(
         auth_strategy: TelegramAuthStrategy = Depends()
 ):
     try:
-        await auth_strategy.add_auth_method_to_user(auth_user.user, TelegramAddAccountData(
+        await auth_strategy.add_auth_account_to_user(auth_user.user, TelegramAddAccountData(
             name=auth_user.name,
             token=body.token
         ))

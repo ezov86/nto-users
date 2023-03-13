@@ -61,7 +61,7 @@ class TelegramAuthStrategy(AuthStrategy[TelegramLoginCredentials, TelegramAddAcc
             tg_photo_url=str(payload["tg_photo_url"])
         )
 
-    def add_auth_method_to_user(self, user: User, data: TelegramAddAccountData):
+    def add_auth_account_to_user(self, user: User, data: TelegramAddAccountData):
         # Raises InvalidAuthData.
         token_account_date = self._decode_tg_token(data.token)
 

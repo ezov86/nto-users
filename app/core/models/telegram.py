@@ -19,4 +19,4 @@ class TelegramAccount(Base):
     tg_photo_url: Mapped[str | None] = mapped_column(default=None)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True, nullable=False)
 
-    user = relationship("User", back_populates="telegram_auth", lazy="joined")
+    user = relationship("User", back_populates="telegram_account", lazy="joined")

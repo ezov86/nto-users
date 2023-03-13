@@ -18,4 +18,4 @@ class EmailAccount(Base):
     password_updated_with_token: Mapped[str] = mapped_column(nullable=True, default=None)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, unique=True)
 
-    user = relationship("User", lazy="joined")
+    user = relationship("User", back_populates="email_account", lazy="joined")

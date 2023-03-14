@@ -72,7 +72,7 @@ class TelegramAuthStrategy(AuthStrategy[TelegramLoginCredentials, TelegramAddAcc
 
         return user
 
-    async def login_for_user_model_or_fail(self, schema: TelegramLoginCredentials) -> User:
+    async def login_for_user(self, schema: TelegramLoginCredentials) -> User:
         # Raises InvalidAuthData.
         token_account_data = self._decode_tg_token(schema.token)
 

@@ -62,7 +62,7 @@ class AuthTokensService:
         """
 
         # Raises InvalidAuthData.
-        user = await strategy.login_for_user_model_or_fail(credentials)
+        user = await strategy.login_for_user(credentials)
 
         # Raises AccessDenied.
         check_user_not_disabled(user)

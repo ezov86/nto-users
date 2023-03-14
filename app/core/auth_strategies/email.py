@@ -72,7 +72,7 @@ class EmailAuthStrategy(AuthStrategy[EmailLoginCredentials, EmailAddAccountData,
         else:
             assert_never(name_or_email)
 
-    async def login_for_user_model_or_fail(self, credentials: EmailLoginCredentials) -> User:
+    async def login_for_user(self, credentials: EmailLoginCredentials) -> User:
         account = await self._get_account(credentials.name_or_email)
         if account is None:
             raise exc.InvalidAuthData()

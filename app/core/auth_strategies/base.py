@@ -44,7 +44,7 @@ class AuthStrategy(Generic[LoginCredentialsType, AddAuthAccountDataType, AuthMet
         """
 
     @abstractmethod
-    async def login_for_user_model_or_fail(self, credentials: LoginCredentialsType) -> User:
+    async def login_for_user(self, credentials: LoginCredentialsType) -> User:
         """
         Verify given credentials for login and return associated user model or fail.
         No scopes check is guaranteed.

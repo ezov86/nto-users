@@ -35,10 +35,10 @@ class TelegramAuthStrategy(AuthStrategy[TelegramLoginCredentials, TelegramAddAcc
     """
 
     def __init__(self,
-                 tg_auth_repo: TelegramAccountRepo = Depends(),
+                 tg_account_repo: TelegramAccountRepo = Depends(),
                  config: Config = Depends(get_config)
                  ):
-        self.tg_auth_repo = tg_auth_repo
+        self.tg_account_repo = tg_account_repo
         self.config = config
 
     def _decode_tg_token(self, token: str) -> TelegramTokenDataSchema:
@@ -74,12 +74,12 @@ class TelegramAuthStrategy(AuthStrategy[TelegramLoginCredentials, TelegramAddAcc
         token_account_data = self._decode_tg_token(schema.token)
 
         # Find auth data in db.
-        account = await self.tg_auth_repo.get_by_tg_user_id(token_account_data.tg_user_id)
+        account = await self.tg_account_repo.get_by_tg_user_id(token_account_data.tg_user_id)
         if account is None:
             raise exc.InvalidAuthData()
 
         # Token data is ok, update profile data.
         account.update_fields(**token_account_data.__dict__)
-        await self.tg_auth_repo.update(account)
+        await self.tg_account_repo.update(account)
 
         return account.user

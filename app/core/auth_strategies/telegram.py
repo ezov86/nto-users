@@ -49,16 +49,13 @@ class TelegramAuthStrategy(AuthStrategy[TelegramLoginCredentials, TelegramAddAcc
                 "tg_last_name",
                 "tg_photo_url"
             ], self.config.telegram.token_secret)
-        except exc.InvalidToken:
-            raise exc.InvalidAuthData()
 
-        # Rename "sub" to "tg_user_id".
-        payload["tg_user_id"] = payload["sub"]
-        del payload["sub"]
+            # Rename "sub" to "tg_user_id".
+            payload["tg_user_id"] = payload["sub"]
+            del payload["sub"]
 
-        try:
             return TelegramTokenDataSchema(**payload)
-        except ValidationError:
+        except (exc.InvalidToken, ValidationError):
             raise exc.InvalidAuthData()
 
     def add_auth_account_to_user(self, user: User, data: TelegramAddAccountData) -> User:

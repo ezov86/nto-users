@@ -80,6 +80,6 @@ class TelegramAuthStrategy(AuthStrategy[TelegramCredentials, TelegramAddAccountD
 
         # Token data is ok, update profile data.
         account.update_fields(**token_account_data.__dict__)
-        await self.tg_account_repo.update(account)
+        account = await self.tg_account_repo.update(account)
 
         return account.user

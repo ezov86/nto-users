@@ -25,15 +25,22 @@ class TestTelegramAuthStrategy(IsolatedAsyncioTestCase):
         self.account_data = self.faker.tg_account_data()
         self.token_data = tg_token_payload_from_data(copy(self.account_data))
         self.token = self.faker.pystr()
+        self.user = self.faker.user_model()
 
         # Patches.
-        # self.decode_jwt = patch("app.core.auth_strategies.telegram.decode_jwt").start()
+        self.decode_jwt = patch("app.core.auth_strategies.telegram.decode_jwt").start()
 
     async def asyncTearDown(self):
         patch.stopall()
 
-    def assert_decode_jwt_called_once(self, mock, token: str):
-        mock.assert_called_once_with(
+    def set_decode_jwt_patch_normal(self):
+        self.decode_jwt.return_value = self.token_data
+
+    def set_decode_jwt_patch_raises(self):
+        self.decode_jwt.raiseError.side_effect = Mock(side_effect=exc.InvalidToken("JWT"))
+
+    def assert_decode_jwt_called_once(self, token: str):
+        self.decode_jwt.assert_called_once_with(
             token,
             [
                 "tg_username",
@@ -44,42 +51,33 @@ class TestTelegramAuthStrategy(IsolatedAsyncioTestCase):
             self.config.telegram.token_secret,
         )
 
-    @patch("app.core.auth_strategies.telegram.decode_jwt")
-    async def test_add_auth_account(self, decode_jwt):
-        decode_jwt.return_value = self.token_data
-
-        user = self.faker.user_model()
-        token = self.faker.pystr()
+    async def test_add_auth_account(self):
+        self.set_decode_jwt_patch_normal()
 
         result = self.strategy.add_auth_account_to_user(
-            copy(user),
-            TelegramAddAccountData(token=token)
+            copy(self.user),
+            TelegramAddAccountData(token=self.token)
         )
 
-        self.assert_decode_jwt_called_once(decode_jwt, token)
-        assert_user_eq(result, user)
-        assert_tg_account_eq(result.telegram_account, TelegramAccount(**account_data))
+        self.assert_decode_jwt_called_once(self.token)
+        assert_user_eq(result, self.user)
+        assert_tg_account_eq(result.telegram_account, TelegramAccount(**self.account_data))
 
-    @patch("app.core.auth_strategies.telegram.decode_jwt")
-    async def test_add_auth_account_invalid_token(self, decode_jwt):
-        decode_jwt.raiseError.side_effect = Mock(side_effect=exc.InvalidToken("JWT"))
-
-        user = self.faker.user_model()
-        token = self.faker.pystr()
+    async def test_add_auth_account_invalid_token(self):
+        self.set_decode_jwt_patch_raises()
 
         with self.assertRaises(exc.InvalidAuthData):
-            self.strategy.add_auth_account_to_user(user, TelegramAddAccountData(token=token))
+            self.strategy.add_auth_account_to_user(
+                self.user,
+                TelegramAddAccountData(token=self.token)
+            )
 
-        self.assert_decode_jwt_called_once(decode_jwt, token)
+        self.assert_decode_jwt_called_once(self.token)
 
-    @patch("app.core.auth_strategies.telegram.decode_jwt")
-    async def test_login_for_user_with_invalid_token(self, decode_jwt):
-        decode_jwt.raiseError.side_effect = Mock(side_effect=exc.InvalidToken("JWT"))
-
-        token = self.faker.pystr()
+    async def test_login_for_user_with_invalid_token(self):
+        self.set_decode_jwt_patch_raises()
 
         with self.assertRaises(exc.InvalidAuthData):
-            await self.strategy.login_for_user(TelegramLoginCredentials(token=token))
+            await self.strategy.login_for_user(TelegramLoginCredentials(token=self.token))
 
-        self.assert_decode_jwt_called_once(decode_jwt, token)
-
+        self.assert_decode_jwt_called_once(self.token)

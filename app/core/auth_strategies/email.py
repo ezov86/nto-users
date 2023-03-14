@@ -10,7 +10,7 @@ from app.core import exc
 from app.core.crypto import hash_password, verify_password
 from app.core.repos import EmailAccountRepo, UserRepo
 from app.config import Config, get_config
-from .base import AddAuthAccountData, AuthStrategy, LoginCredentials
+from .base import AddAuthAccountData, AuthStrategy, Credentials
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -22,13 +22,13 @@ class EmailAddAccountData(AddAuthAccountData):
 
 
 @dataclass(frozen=True, kw_only=True)
-class EmailLoginCredentials(LoginCredentials):
+class EmailCredentials(Credentials):
     name_or_email: str | EmailStr
     """ Put EmailStr value if email given, else str. """
     password: str
 
 
-class EmailAuthStrategy(AuthStrategy[EmailLoginCredentials, EmailAddAccountData, EmailAccount]):
+class EmailAuthStrategy(AuthStrategy[EmailCredentials, EmailAddAccountData, EmailAccount]):
     """
     Authentication via email requires a valid email address and password.
     Email verification is required EmailAccount.is_verified = False.
@@ -72,7 +72,7 @@ class EmailAuthStrategy(AuthStrategy[EmailLoginCredentials, EmailAddAccountData,
         else:
             assert_never(name_or_email)
 
-    async def login_for_user(self, credentials: EmailLoginCredentials) -> User:
+    async def login_for_user(self, credentials: EmailCredentials) -> User:
         account = await self._get_account(credentials.name_or_email)
         if account is None:
             raise exc.InvalidAuthData()

@@ -13,13 +13,13 @@ class AddAuthAccountData:
 
 
 @dataclass(frozen=True, kw_only=True)
-class LoginCredentials:
+class Credentials:
     """
     Data required for strategy to login.
     """
 
 
-LoginCredentialsType = TypeVar("LoginCredentialsType", bound=LoginCredentials)
+LoginCredentialsType = TypeVar("LoginCredentialsType", bound=Credentials)
 AddAuthAccountDataType = TypeVar("AddAuthAccountDataType", bound=AddAuthAccountData)
 AuthMethodDataType = TypeVar("AuthMethodDataType", bound=Base)
 

@@ -6,11 +6,11 @@ from .base import (
 )
 from .telegram import (
     TelegramAddAccountData,
-    TelegramLoginCredentials,
+    TelegramCredentials,
     TelegramAuthStrategy
 )
 from .email import (
     EmailAuthStrategy,
     EmailAddAccountData,
-    EmailLoginCredentials
+    EmailCredentials
 )

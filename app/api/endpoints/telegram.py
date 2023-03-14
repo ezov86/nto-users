@@ -7,7 +7,7 @@ from app.core import exc
 from app.core.auth_tokens import AuthTokensService
 from app.core.register import RegistrationService
 from app.core.security import AuthorizedUser
-from app.core.auth_strategies import TelegramAuthStrategy, TelegramLoginCredentials, TelegramAddAccountData
+from app.core.auth_strategies import TelegramAuthStrategy, TelegramCredentials, TelegramAddAccountData
 
 tg_router = APIRouter(
     tags=["telegram"]
@@ -73,7 +73,7 @@ async def tg_login(
         auth_strategy: TelegramAuthStrategy = Depends()
 ) -> AuthTokensSchema:
     try:
-        tokens = await auth_service.login_for_tokens(auth_strategy, TelegramLoginCredentials(
+        tokens = await auth_service.login_for_tokens(auth_strategy, TelegramCredentials(
             token=body.token,
             scopes=body.scope.split()
         ))
